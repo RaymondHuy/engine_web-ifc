@@ -1,0 +1,14 @@
+# Build outputs
+**/bin/
+**/obj/
+
+# Test artifacts
+**/TestResults/
+**/*.coverage
+**/*.coveragexml
+
+# User/IDE local files
+**/*.user
+**/*.suo
+**/*.userprefs
+**/*.rsuser
