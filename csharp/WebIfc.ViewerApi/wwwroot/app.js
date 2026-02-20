@@ -5,6 +5,7 @@ const viewport = document.getElementById("viewport");
 const summaryText = document.getElementById("summaryText");
 const loadSampleBtn = document.getElementById("loadSampleBtn");
 const uploadInput = document.getElementById("uploadInput");
+const uploadAppendInput = document.getElementById("uploadAppendInput");
 const clearBtn = document.getElementById("clearBtn");
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -30,8 +31,7 @@ const ifcApi = new WebIFC.IfcAPI();
 ifcApi.SetWasmPath("https://unpkg.com/web-ifc@0.0.75/", true);
 await ifcApi.Init();
 
-let currentModelId = null;
-let currentModelRoot = null;
+let loadedModels = [];
 
 function resize() {
   const width = viewport.clientWidth;
@@ -52,22 +52,60 @@ function animate() {
 
 animate();
 
-function clearCurrentModel() {
-  if (currentModelRoot) {
-    scene.remove(currentModelRoot);
-    currentModelRoot.traverse((object) => {
-      if (object.isMesh) {
-        object.geometry.dispose();
-        object.material.dispose();
+function clearAllModels() {
+  for (const model of loadedModels) {
+    scene.remove(model.root);
+    model.root.traverse((object) => {
+      if (!object.isMesh) {
+        return;
+      }
+
+      object.geometry?.dispose?.();
+      if (Array.isArray(object.material)) {
+        object.material.forEach((material) => material?.dispose?.());
+      } else {
+        object.material?.dispose?.();
       }
     });
-    currentModelRoot = null;
+
+    ifcApi.CloseModel(model.modelId);
   }
 
-  if (currentModelId !== null) {
-    ifcApi.CloseModel(currentModelId);
-    currentModelId = null;
+  loadedModels = [];
+}
+
+function fitCameraToLoadedModels() {
+  if (loadedModels.length === 0) {
+    return;
   }
+
+  const bounds = new THREE.Box3();
+  for (const model of loadedModels) {
+    bounds.expandByObject(model.root);
+  }
+
+  if (bounds.isEmpty()) {
+    return;
+  }
+
+  const center = bounds.getCenter(new THREE.Vector3());
+  controls.target.copy(center);
+  camera.position.set(center.x + 16, center.y + 12, center.z + 16);
+  controls.update();
+}
+
+function updateSummary(summary, sourceLabel, append) {
+  const block = `${formatSummary(summary, sourceLabel)}\nLoaded models: ${loadedModels.length}`;
+  const hasPrevious = summaryText.textContent &&
+    summaryText.textContent !== "No model loaded." &&
+    summaryText.textContent !== "Scene cleared.";
+
+  if (append && hasPrevious) {
+    summaryText.textContent = `${summaryText.textContent}\n\n${block}`;
+    return;
+  }
+
+  summaryText.textContent = block;
 }
 
 function formatSummary(summary, source) {
@@ -137,9 +175,11 @@ async function fetchSummary(url) {
   return response.json();
 }
 
-async function loadModelFromApi(ifcUrl, summaryUrl, sourceLabel) {
-  clearCurrentModel();
-  summaryText.textContent = "Loading model from API...";
+async function loadModelFromApi(ifcUrl, summaryUrl, sourceLabel, append = false) {
+  if (!append) {
+    clearAllModels();
+    summaryText.textContent = "Loading model from API...";
+  }
 
   const modelResponse = await fetch(ifcUrl);
   if (!modelResponse.ok) {
@@ -147,18 +187,18 @@ async function loadModelFromApi(ifcUrl, summaryUrl, sourceLabel) {
   }
 
   const data = new Uint8Array(await modelResponse.arrayBuffer());
-  currentModelId = ifcApi.OpenModel(data, {
+  const modelId = ifcApi.OpenModel(data, {
     COORDINATE_TO_ORIGIN: true,
     CIRCLE_SEGMENTS: 12
   });
 
   const modelGroup = new THREE.Group();
 
-  ifcApi.StreamAllMeshes(currentModelId, (flatMesh) => {
+  ifcApi.StreamAllMeshes(modelId, (flatMesh) => {
     const placedGeometries = flatMesh.geometries;
     for (let i = 0; i < placedGeometries.size(); i++) {
       const placedGeometry = placedGeometries.get(i);
-      const geomData = ifcApi.GetGeometry(currentModelId, placedGeometry.geometryExpressID);
+      const geomData = ifcApi.GetGeometry(modelId, placedGeometry.geometryExpressID);
       const verts = ifcApi.GetVertexArray(geomData.GetVertexData(), geomData.GetVertexDataSize());
       const indices = ifcApi.GetIndexArray(geomData.GetIndexData(), geomData.GetIndexDataSize());
 
@@ -178,17 +218,42 @@ async function loadModelFromApi(ifcUrl, summaryUrl, sourceLabel) {
     }
   });
 
-  currentModelRoot = modelGroup;
   scene.add(modelGroup);
-
-  const bounds = new THREE.Box3().setFromObject(modelGroup);
-  const center = bounds.getCenter(new THREE.Vector3());
-  controls.target.copy(center);
-  camera.position.set(center.x + 16, center.y + 12, center.z + 16);
-  controls.update();
+  loadedModels.push({ modelId, root: modelGroup });
+  fitCameraToLoadedModels();
 
   const summary = await fetchSummary(summaryUrl);
-  summaryText.textContent = formatSummary(summary, sourceLabel);
+  updateSummary(summary, sourceLabel, append);
+}
+
+async function uploadAndLoad(file, append = false) {
+  if (!append || loadedModels.length === 0) {
+    const modeText = append ? "Appending IFC via C# API..." : "Uploading IFC to C# API...";
+    summaryText.textContent = modeText;
+  }
+
+  const bytes = await file.arrayBuffer();
+  const uploadResponse = await fetch(`/api/models/upload?fileName=${encodeURIComponent(file.name)}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/octet-stream"
+    },
+    body: bytes
+  });
+
+  if (!uploadResponse.ok) {
+    throw new Error(`Upload failed (${uploadResponse.status}).`);
+  }
+
+  const uploadResult = await uploadResponse.json();
+  const modelId = uploadResult.modelId;
+
+  await loadModelFromApi(
+    `/api/models/${modelId}/ifc`,
+    `/api/models/${modelId}/summary`,
+    `upload:${file.name}`,
+    append
+  );
 }
 
 loadSampleBtn.addEventListener("click", async () => {
@@ -205,31 +270,8 @@ uploadInput.addEventListener("change", async (event) => {
     return;
   }
 
-  summaryText.textContent = "Uploading IFC to C# API...";
-
   try {
-    const bytes = await file.arrayBuffer();
-
-    const uploadResponse = await fetch(`/api/models/upload?fileName=${encodeURIComponent(file.name)}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/octet-stream"
-      },
-      body: bytes
-    });
-
-    if (!uploadResponse.ok) {
-      throw new Error(`Upload failed (${uploadResponse.status}).`);
-    }
-
-    const uploadResult = await uploadResponse.json();
-    const modelId = uploadResult.modelId;
-
-    await loadModelFromApi(
-      `/api/models/${modelId}/ifc`,
-      `/api/models/${modelId}/summary`,
-      `upload:${file.name}`
-    );
+    await uploadAndLoad(file, false);
   } catch (error) {
     summaryText.textContent = `Upload failed: ${error.message}`;
   } finally {
@@ -237,7 +279,22 @@ uploadInput.addEventListener("change", async (event) => {
   }
 });
 
+uploadAppendInput.addEventListener("change", async (event) => {
+  const file = event.target.files?.[0];
+  if (!file) {
+    return;
+  }
+
+  try {
+    await uploadAndLoad(file, true);
+  } catch (error) {
+    summaryText.textContent = `Upload failed: ${error.message}`;
+  } finally {
+    uploadAppendInput.value = "";
+  }
+});
+
 clearBtn.addEventListener("click", () => {
-  clearCurrentModel();
+  clearAllModels();
   summaryText.textContent = "Scene cleared.";
 });
