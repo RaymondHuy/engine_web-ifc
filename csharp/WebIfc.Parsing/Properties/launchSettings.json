@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "Read IFC (example)": {
+      "commandName": "Project",
+      "workingDirectory": ".",
+      "commandLineArgs": "../../tests/ifcfiles/public/example.ifc 20"
+    }
+  }
+}
