@@ -16,7 +16,18 @@ internal static class Program
             return args.Length == 0 ? 1 : 0;
         }
 
-        var inputPath = Path.GetFullPath(args[0]);
+        var useMemoryMap = args.Any(a => string.Equals(a, "--mmap", StringComparison.OrdinalIgnoreCase));
+        var positionalArgs = args
+            .Where(a => !string.Equals(a, "--mmap", StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+
+        if (positionalArgs.Length == 0)
+        {
+            PrintUsage();
+            return 1;
+        }
+
+        var inputPath = Path.GetFullPath(positionalArgs[0]);
         if (!File.Exists(inputPath))
         {
             Console.Error.WriteLine($"IFC file not found: {inputPath}");
@@ -24,7 +35,7 @@ internal static class Program
         }
 
         var topTypes = 20;
-        if (args.Length > 1 && (!int.TryParse(args[1], out topTypes) || topTypes <= 0))
+        if (positionalArgs.Length > 1 && (!int.TryParse(positionalArgs[1], out topTypes) || topTypes <= 0))
         {
             Console.Error.WriteLine("Invalid topTypes argument. Expected a positive integer.");
             PrintUsage();
@@ -41,9 +52,17 @@ internal static class Program
                 schemaManager: schemaManager
             );
 
-            using var stream = File.OpenRead(inputPath);
             var stopwatch = Stopwatch.StartNew();
-            loader.LoadFile(stream);
+            if (useMemoryMap)
+            {
+                loader.LoadFile(inputPath);
+            }
+            else
+            {
+                using var stream = File.OpenRead(inputPath);
+                loader.LoadFile(stream);
+            }
+
             stopwatch.Stop();
 
             var schema = loader.GetSchema();
@@ -55,6 +74,7 @@ internal static class Program
             Console.WriteLine($"Data lines: {expressIds.Length}");
             Console.WriteLine($"Max express id: #{maxExpressId}");
             Console.WriteLine($"Parse time: {stopwatch.ElapsedMilliseconds} ms");
+            Console.WriteLine($"Source mode: {(useMemoryMap ? "memory-map" : "stream")}");
             if (expressIds.Length > 0)
             {
                 Console.WriteLine($"Express id range: #{expressIds[0]} .. #{expressIds[^1]}");
@@ -100,10 +120,11 @@ internal static class Program
     private static void PrintUsage()
     {
         Console.WriteLine("Usage:");
-        Console.WriteLine("  dotnet run --project csharp/WebIfc.Parsing/WebIfc.Parsing.csproj -p:OutputType=Exe -- <path-to-ifc> [topTypes]");
+        Console.WriteLine("  dotnet run --project csharp/WebIfc.Parsing/WebIfc.Parsing.csproj -- <path-to-ifc> [topTypes] [--mmap]");
         Console.WriteLine();
         Console.WriteLine("Examples:");
-        Console.WriteLine("  dotnet run --project csharp/WebIfc.Parsing/WebIfc.Parsing.csproj -p:OutputType=Exe -- tests/ifcfiles/public/example.ifc");
-        Console.WriteLine("  dotnet run --project csharp/WebIfc.Parsing/WebIfc.Parsing.csproj -p:OutputType=Exe -- tests/ifcfiles/public/example.ifc 30");
+        Console.WriteLine("  dotnet run --project csharp/WebIfc.Parsing/WebIfc.Parsing.csproj -- tests/ifcfiles/public/example.ifc");
+        Console.WriteLine("  dotnet run --project csharp/WebIfc.Parsing/WebIfc.Parsing.csproj -- tests/ifcfiles/public/example.ifc 30");
+        Console.WriteLine("  dotnet run --project csharp/WebIfc.Parsing/WebIfc.Parsing.csproj -- tests/ifcfiles/public/example.ifc 30 --mmap");
     }
 }

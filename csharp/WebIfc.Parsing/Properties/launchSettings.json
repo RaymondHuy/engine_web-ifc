@@ -4,6 +4,11 @@
       "commandName": "Project",
       "workingDirectory": ".",
       "commandLineArgs": "../../tests/ifcfiles/public/example.ifc 20"
+    },
+    "Read IFC (memory map)": {
+      "commandName": "Project",
+      "workingDirectory": ".",
+      "commandLineArgs": "../../tests/ifcfiles/NVW_DCR-LOD/NVW_DCR-LOD300_Arch.ifc 20 --mmap"
     }
   }
 }

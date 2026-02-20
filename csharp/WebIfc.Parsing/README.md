@@ -37,13 +37,29 @@ dotnet build /Users/huyluong/Documents/engine_web-ifc/csharp/WebIfc.Parsing/WebI
 - Project is configured as runnable (`OutputType=Exe`).
 - Default launch profile is in:
   - `/Users/huyluong/Documents/engine_web-ifc/csharp/WebIfc.Parsing/Properties/launchSettings.json`
-  - Profile name: `Read IFC (example)`
+  - Profile names:
+    - `Read IFC (example)` (stream)
+    - `Read IFC (memory map)` (memory mapped)
   - Default args: `../../tests/ifcfiles/public/example.ifc 20`
 
 Run from terminal:
 
 ```bash
 dotnet run --project /Users/huyluong/Documents/engine_web-ifc/csharp/WebIfc.Parsing/WebIfc.Parsing.csproj -- ../../tests/ifcfiles/public/example.ifc 20
+dotnet run --project /Users/huyluong/Documents/engine_web-ifc/csharp/WebIfc.Parsing/WebIfc.Parsing.csproj -- ../../tests/ifcfiles/public/example.ifc 20 --mmap
+```
+
+## Load API
+
+Both loading styles are supported:
+
+```csharp
+// Existing stream mode
+using var stream = File.OpenRead("model.ifc");
+loader.LoadFile(stream);
+
+// New memory-mapped overload
+loader.LoadFile("model.ifc");
 ```
 
 ## Regenerate Type Map

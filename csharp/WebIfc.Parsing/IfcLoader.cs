@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.IO.MemoryMappedFiles;
 using System.Linq;
 using System.Text;
 
@@ -24,6 +25,10 @@ public sealed class IfcLoader : IDisposable
     private readonly uint _fileDescriptionType;
     private readonly uint _fileNameType;
     private readonly uint _fileSchemaType;
+
+    // Owned memory-map resources used by the LoadFile(string) overload.
+    private MemoryMappedFile? _mappedFile;
+    private MemoryMappedViewAccessor? _mappedViewAccessor;
 
     public IfcLoader(uint tapeSize, ulong memoryLimit, uint lineWriterBuffer, IIfcSchemaManager schemaManager)
     {
@@ -88,13 +93,68 @@ public sealed class IfcLoader : IDisposable
 
     public void LoadFile(TokenDataSource requestData)
     {
+        ClearMappedSource();
         _tokenStream.SetTokenSource(requestData);
         ParseLines();
     }
 
     public void LoadFile(Stream requestData)
     {
+        ClearMappedSource();
         _tokenStream.SetTokenSource(requestData);
+        ParseLines();
+    }
+
+    public void LoadFile(string filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            throw new ArgumentException("File path must not be empty.", nameof(filePath));
+        }
+
+        var fullPath = Path.GetFullPath(filePath);
+        if (!File.Exists(fullPath))
+        {
+            throw new FileNotFoundException($"IFC file not found: {fullPath}", fullPath);
+        }
+
+        ClearMappedSource();
+
+        var fileLength = new FileInfo(fullPath).Length;
+        if (fileLength == 0)
+        {
+            _tokenStream.SetTokenSource((_, _, _) => 0);
+            ParseLines();
+            return;
+        }
+
+        _mappedFile = MemoryMappedFile.CreateFromFile(
+            fullPath,
+            FileMode.Open,
+            mapName: null,
+            capacity: 0,
+            access: MemoryMappedFileAccess.Read);
+        _mappedViewAccessor = _mappedFile.CreateViewAccessor(0, 0, MemoryMappedFileAccess.Read);
+
+        var viewAccessor = _mappedViewAccessor;
+        var sourceLength = fileLength;
+
+        _tokenStream.SetTokenSource((dest, sourceOffset, destSize) =>
+        {
+            if (sourceOffset >= sourceLength)
+            {
+                return 0;
+            }
+
+            var bytesToRead = (int)Math.Min(destSize, sourceLength - sourceOffset);
+            if (bytesToRead <= 0)
+            {
+                return 0;
+            }
+
+            return viewAccessor.ReadArray(sourceOffset, dest, 0, bytesToRead);
+        });
+
         ParseLines();
     }
 
@@ -730,10 +790,20 @@ public sealed class IfcLoader : IDisposable
 
     public void Dispose()
     {
+        ClearMappedSource();
         _tokenStream.Dispose();
         _lines.Clear();
         _headerLines.Clear();
         _ifcTypeToExpressId.Clear();
+    }
+
+    private void ClearMappedSource()
+    {
+        _mappedViewAccessor?.Dispose();
+        _mappedViewAccessor = null;
+
+        _mappedFile?.Dispose();
+        _mappedFile = null;
     }
 
     private void ParseLines()
