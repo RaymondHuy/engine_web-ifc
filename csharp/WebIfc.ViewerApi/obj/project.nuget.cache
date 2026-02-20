@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "aIKi8qy4l9s=",
+  "success": true,
+  "projectFilePath": "/Users/huyluong/Documents/engine_web-ifc/csharp/WebIfc.ViewerApi/WebIfc.ViewerApi.csproj",
+  "expectedPackageFiles": [
+    "/Users/huyluong/.nuget/packages/microsoft.netcore.app.ref/8.0.22/microsoft.netcore.app.ref.8.0.22.nupkg.sha512",
+    "/Users/huyluong/.nuget/packages/microsoft.aspnetcore.app.ref/8.0.22/microsoft.aspnetcore.app.ref.8.0.22.nupkg.sha512",
+    "/Users/huyluong/.nuget/packages/microsoft.netcore.app.host.osx-arm64/8.0.22/microsoft.netcore.app.host.osx-arm64.8.0.22.nupkg.sha512"
+  ],
+  "logs": []
+}

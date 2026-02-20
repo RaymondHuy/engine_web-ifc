@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WebIfc Viewer (C# API)</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header>
+    <h1>Viewer 2: WebIfc + C# API</h1>
+    <p>Model bytes and summaries are served by ASP.NET Core endpoints.</p>
+  </header>
+
+  <main>
+    <section class="controls">
+      <button id="loadSampleBtn">Load Sample From API</button>
+      <label class="upload">
+        <input id="uploadInput" type="file" accept=".ifc" />
+        <span>Upload IFC To API</span>
+      </label>
+      <button id="clearBtn">Clear Scene</button>
+    </section>
+
+    <section class="content">
+      <div id="viewport"></div>
+      <aside id="summaryPanel">
+        <h2>Summary</h2>
+        <pre id="summaryText">No model loaded.</pre>
+      </aside>
+    </section>
+  </main>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.182.0/build/three.module.js",
+        "three/": "https://unpkg.com/three@0.182.0/"
+      }
+    }
+  </script>
+  <script src="https://unpkg.com/web-ifc@0.0.75/web-ifc-api-iife.js"></script>
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
