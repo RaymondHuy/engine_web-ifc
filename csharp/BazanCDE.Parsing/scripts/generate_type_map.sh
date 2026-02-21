@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/../../.." && pwd)"
 SRC_TS="$ROOT_DIR/src/ts/ifc-schema.ts"
-OUT_CS="$ROOT_DIR/csharp/WebIfc.Parsing/IfcTypeNameMap.cs"
+OUT_CS="$ROOT_DIR/csharp/BazanCDE.Parsing/IfcTypeNameMap.cs"
 TMP_ENTRIES="$(mktemp)"
 
 awk '/^export const [A-Z0-9_]+ = [0-9]+;/ {
@@ -12,7 +12,7 @@ awk '/^export const [A-Z0-9_]+ = [0-9]+;/ {
 }' "$SRC_TS" > "$TMP_ENTRIES"
 
 {
-  echo "namespace WebIfc.Parsing;"
+  echo "namespace BazanCDE.Parsing;"
   echo
   echo "internal static class IfcTypeNameMap"
   echo "{"

@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 using Microsoft.AspNetCore.Mvc;
-using WebIfc.Parsing;
+using BazanCDE.Parsing;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -55,7 +55,7 @@ app.MapGet("/styles.css", () =>
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
 app.MapGet("/api", () => Results.Ok(new
 {
-    name = "WebIfc.ViewerApi",
+    name = "BazanCDE.ViewerApi",
     endpoints = new[]
     {
         "GET /api/health",
@@ -159,7 +159,7 @@ static string? ResolveViewerRoot(string contentRootPath)
     {
         Path.Combine(AppContext.BaseDirectory, "wwwroot"),
         Path.Combine(contentRootPath, "wwwroot"),
-        Path.Combine(contentRootPath, "csharp", "WebIfc.ViewerApi", "wwwroot"),
+        Path.Combine(contentRootPath, "csharp", "BazanCDE.ViewerApi", "wwwroot"),
         Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "wwwroot")),
     };
 
@@ -172,7 +172,7 @@ static string? ResolveSampleIfcPath(string contentRootPath)
     {
         Path.Combine(contentRootPath, "examples", "example.ifc"),
         Path.Combine(contentRootPath, "..", "..", "examples", "example.ifc"),
-        Path.Combine(contentRootPath, "csharp", "WebIfc.ViewerApi", "..", "..", "examples", "example.ifc"),
+        Path.Combine(contentRootPath, "csharp", "BazanCDE.ViewerApi", "..", "..", "examples", "example.ifc"),
         Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "..", "examples", "example.ifc")),
     };
 

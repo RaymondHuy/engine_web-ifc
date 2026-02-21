@@ -5,15 +5,15 @@ VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "csharp", "csharp", "{B41BF331-FCCB-2ADF-CDB6-767964B34647}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebIfc.Parsing", "csharp\WebIfc.Parsing\WebIfc.Parsing.csproj", "{F61A4D16-DAF5-7C34-81D3-9199F19E90D9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BazanCDE.Parsing", "csharp\BazanCDE.Parsing\BazanCDE.Parsing.csproj", "{F61A4D16-DAF5-7C34-81D3-9199F19E90D9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebIfc.ViewerApi", "csharp\WebIfc.ViewerApi\WebIfc.ViewerApi.csproj", "{A8097358-9AAE-4DF8-9905-332C54F7BC7F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BazanCDE.ViewerApi", "csharp\BazanCDE.ViewerApi\BazanCDE.ViewerApi.csproj", "{A8097358-9AAE-4DF8-9905-332C54F7BC7F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{3A48EA60-CB24-6603-8658-E3D34B7F9617}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "spec", "spec", "{0BAD29D1-F90C-11D7-F08A-407802CEA7E0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebIfc.Parsing.Specs", "csharp\tests\spec\WebIfc.Parsing.Specs.csproj", "{B7AEB0D9-462D-43AA-80AA-1AD7C49AD74E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BazanCDE.Parsing.Specs", "csharp\tests\spec\BazanCDE.Parsing.Specs.csproj", "{B7AEB0D9-462D-43AA-80AA-1AD7C49AD74E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

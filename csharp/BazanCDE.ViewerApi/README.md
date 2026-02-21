@@ -1,4 +1,4 @@
-# WebIfc Viewer API (C#)
+# BazanCDE Viewer API (C#)
 
 Second viewer that fetches IFC models via a C# backend API.
 
@@ -19,7 +19,7 @@ Second viewer that fetches IFC models via a C# backend API.
 ## Run
 
 ```bash
-dotnet run --project /Users/huyluong/Documents/engine_web-ifc/csharp/WebIfc.ViewerApi/WebIfc.ViewerApi.csproj
+dotnet run --project /Users/huyluong/Documents/engine_web-ifc/csharp/BazanCDE.ViewerApi/BazanCDE.ViewerApi.csproj
 ```
 
 Open:
@@ -29,4 +29,4 @@ Open:
 ## Notes
 
 - The browser viewer loads `web-ifc` and `three` from CDN (`unpkg`).
-- Model parsing for summaries uses `/Users/huyluong/Documents/engine_web-ifc/csharp/WebIfc.Parsing`.
+- Model parsing for summaries uses `/Users/huyluong/Documents/engine_web-ifc/csharp/BazanCDE.Parsing`.

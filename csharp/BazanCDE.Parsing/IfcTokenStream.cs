@@ -1,7 +1,7 @@
 using System.Buffers.Binary;
 using System.Text;
 
-namespace WebIfc.Parsing;
+namespace BazanCDE.Parsing;
 
 public delegate int TokenDataSource(byte[] dest, long sourceOffset, int destSize);
 

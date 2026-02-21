@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 
-namespace WebIfc.Parsing;
+namespace BazanCDE.Parsing;
 
 public static class IfcStringParsing
 {

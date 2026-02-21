@@ -1,7 +1,7 @@
-using WebIfc.Parsing;
+using BazanCDE.Parsing;
 using Xunit;
 
-namespace WebIfc.Parsing.Specs;
+namespace BazanCDE.Parsing.Specs;
 
 public sealed class ParsingSpecsTests
 {

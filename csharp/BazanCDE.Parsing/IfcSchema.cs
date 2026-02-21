@@ -1,4 +1,4 @@
-namespace WebIfc.Parsing;
+namespace BazanCDE.Parsing;
 
 public enum IfcSchema
 {

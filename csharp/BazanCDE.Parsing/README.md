@@ -1,4 +1,4 @@
-# WebIfc Parser (C# Port)
+# BazanCDE Parser (C# Port)
 
 This folder contains a C# port of the parser components from the C++ implementation:
 
@@ -29,14 +29,14 @@ var loader = new IfcLoader(
 ## Build
 
 ```bash
-dotnet build /Users/huyluong/Documents/engine_web-ifc/csharp/WebIfc.Parsing/WebIfc.Parsing.csproj
+dotnet build /Users/huyluong/Documents/engine_web-ifc/csharp/BazanCDE.Parsing/BazanCDE.Parsing.csproj
 ```
 
 ## Run (CLI / Rider)
 
 - Project is configured as runnable (`OutputType=Exe`).
 - Default launch profile is in:
-  - `/Users/huyluong/Documents/engine_web-ifc/csharp/WebIfc.Parsing/Properties/launchSettings.json`
+  - `/Users/huyluong/Documents/engine_web-ifc/csharp/BazanCDE.Parsing/Properties/launchSettings.json`
   - Profile names:
     - `Read IFC (example)` (stream)
     - `Read IFC (memory map)` (memory mapped)
@@ -45,8 +45,8 @@ dotnet build /Users/huyluong/Documents/engine_web-ifc/csharp/WebIfc.Parsing/WebI
 Run from terminal:
 
 ```bash
-dotnet run --project /Users/huyluong/Documents/engine_web-ifc/csharp/WebIfc.Parsing/WebIfc.Parsing.csproj -- ../../tests/ifcfiles/public/example.ifc 20
-dotnet run --project /Users/huyluong/Documents/engine_web-ifc/csharp/WebIfc.Parsing/WebIfc.Parsing.csproj -- ../../tests/ifcfiles/public/example.ifc 20 --mmap
+dotnet run --project /Users/huyluong/Documents/engine_web-ifc/csharp/BazanCDE.Parsing/BazanCDE.Parsing.csproj -- ../../tests/ifcfiles/public/example.ifc 20
+dotnet run --project /Users/huyluong/Documents/engine_web-ifc/csharp/BazanCDE.Parsing/BazanCDE.Parsing.csproj -- ../../tests/ifcfiles/public/example.ifc 20 --mmap
 ```
 
 ## Load API
@@ -67,5 +67,5 @@ loader.LoadFile("model.ifc");
 When `src/ts/ifc-schema.ts` changes, regenerate `IfcTypeNameMap.cs`:
 
 ```bash
-/Users/huyluong/Documents/engine_web-ifc/csharp/WebIfc.Parsing/scripts/generate_type_map.sh
+/Users/huyluong/Documents/engine_web-ifc/csharp/BazanCDE.Parsing/scripts/generate_type_map.sh
 ```

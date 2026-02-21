@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace WebIfc.Parsing;
+namespace BazanCDE.Parsing;
 
 public sealed class DefaultIfcSchemaManager : IIfcSchemaManager
 {

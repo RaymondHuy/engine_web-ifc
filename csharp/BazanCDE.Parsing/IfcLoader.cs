@@ -3,7 +3,7 @@ using System.IO.MemoryMappedFiles;
 using System.Linq;
 using System.Text;
 
-namespace WebIfc.Parsing;
+namespace BazanCDE.Parsing;
 
 public sealed class IfcLoader : IDisposable
 {
@@ -165,7 +165,7 @@ public sealed class IfcLoader : IDisposable
         var output = new StringBuilder();
         output.Append("ISO-10303-21;\nHEADER;\n");
         output.Append("/******************************************************\n");
-        output.Append("* STEP Physical File produced by: That Open Engine WebIfc\n");
+        output.Append("* STEP Physical File produced by: That Open Engine BazanCDE\n");
         output.Append("* Module: web-ifc/IfcLoader\n");
         output.Append("* Source: https://github.com/ThatOpen/engine_web-ifc\n");
         output.Append("* Issues: https://github.com/ThatOpen/engine_web-ifc/issues\n");

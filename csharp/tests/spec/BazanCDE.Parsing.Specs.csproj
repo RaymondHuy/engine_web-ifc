@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\..\WebIfc.Parsing\WebIfc.Parsing.csproj" />
+    <ProjectReference Include="..\..\BazanCDE.Parsing\BazanCDE.Parsing.csproj" />
   </ItemGroup>
 
   <ItemGroup>

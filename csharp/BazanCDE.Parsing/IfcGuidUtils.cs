@@ -1,7 +1,7 @@
 using System.Linq;
 using System.Text;
 
-namespace WebIfc.Parsing;
+namespace BazanCDE.Parsing;
 
 public static class IfcGuidUtils
 {

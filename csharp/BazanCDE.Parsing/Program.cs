@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace WebIfc.Parsing;
+namespace BazanCDE.Parsing;
 
 internal static class Program
 {
@@ -120,11 +120,11 @@ internal static class Program
     private static void PrintUsage()
     {
         Console.WriteLine("Usage:");
-        Console.WriteLine("  dotnet run --project csharp/WebIfc.Parsing/WebIfc.Parsing.csproj -- <path-to-ifc> [topTypes] [--mmap]");
+        Console.WriteLine("  dotnet run --project csharp/BazanCDE.Parsing/BazanCDE.Parsing.csproj -- <path-to-ifc> [topTypes] [--mmap]");
         Console.WriteLine();
         Console.WriteLine("Examples:");
-        Console.WriteLine("  dotnet run --project csharp/WebIfc.Parsing/WebIfc.Parsing.csproj -- tests/ifcfiles/public/example.ifc");
-        Console.WriteLine("  dotnet run --project csharp/WebIfc.Parsing/WebIfc.Parsing.csproj -- tests/ifcfiles/public/example.ifc 30");
-        Console.WriteLine("  dotnet run --project csharp/WebIfc.Parsing/WebIfc.Parsing.csproj -- tests/ifcfiles/public/example.ifc 30 --mmap");
+        Console.WriteLine("  dotnet run --project csharp/BazanCDE.Parsing/BazanCDE.Parsing.csproj -- tests/ifcfiles/public/example.ifc");
+        Console.WriteLine("  dotnet run --project csharp/BazanCDE.Parsing/BazanCDE.Parsing.csproj -- tests/ifcfiles/public/example.ifc 30");
+        Console.WriteLine("  dotnet run --project csharp/BazanCDE.Parsing/BazanCDE.Parsing.csproj -- tests/ifcfiles/public/example.ifc 30 --mmap");
     }
 }
