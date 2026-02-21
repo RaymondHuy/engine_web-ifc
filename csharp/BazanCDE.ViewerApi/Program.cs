@@ -21,6 +21,7 @@ app.UseCors();
 
 var viewerRoot = ResolveViewerRoot(app.Environment.ContentRootPath);
 var sampleIfcPath = ResolveSampleIfcPath(app.Environment.ContentRootPath);
+var webIfcLocalRoot = ResolveWebIfcLocalRoot(app.Environment.ContentRootPath);
 
 app.MapGet("/", () =>
 {
@@ -50,6 +51,38 @@ app.MapGet("/styles.css", () =>
     }
 
     return Results.File(Path.Combine(viewerRoot, "styles.css"), "text/css; charset=utf-8");
+});
+
+app.MapGet("/vendor/web-ifc/{fileName}", (string fileName) =>
+{
+    if (webIfcLocalRoot is null)
+    {
+        return Results.NotFound(new
+        {
+            error = "Local web-ifc package not found. Expected folder: csharp/BazanCDE.ViewerApi/web-ifc-local"
+        });
+    }
+
+    var allowed = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["web-ifc-api-iife.js"] = "application/javascript; charset=utf-8",
+        ["web-ifc.wasm"] = "application/wasm",
+        ["web-ifc-mt.wasm"] = "application/wasm",
+        ["web-ifc-node.wasm"] = "application/wasm"
+    };
+
+    if (!allowed.TryGetValue(fileName, out var contentType))
+    {
+        return Results.NotFound(new { error = "Asset not found." });
+    }
+
+    var path = Path.Combine(webIfcLocalRoot, fileName);
+    if (!File.Exists(path))
+    {
+        return Results.NotFound(new { error = "Asset not found." });
+    }
+
+    return Results.File(path, contentType);
 });
 
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
@@ -177,6 +210,19 @@ static string? ResolveSampleIfcPath(string contentRootPath)
     };
 
     return candidates.Select(Path.GetFullPath).FirstOrDefault(File.Exists);
+}
+
+static string? ResolveWebIfcLocalRoot(string contentRootPath)
+{
+    var candidates = new[]
+    {
+        Path.Combine(contentRootPath, "csharp", "BazanCDE.ViewerApi", "web-ifc-local"),
+        Path.Combine(contentRootPath, "web-ifc-local"),
+        Path.Combine(AppContext.BaseDirectory, "web-ifc-local"),
+        Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "web-ifc-local"))
+    };
+
+    return candidates.Select(Path.GetFullPath).FirstOrDefault(Directory.Exists);
 }
 
 internal sealed class IfcModelAnalyzer

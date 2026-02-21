@@ -28,5 +28,9 @@ Open:
 
 ## Notes
 
-- The browser viewer loads `web-ifc` and `three` from CDN (`unpkg`).
+- The browser viewer loads `web-ifc` from local files:
+  - `/Users/huyluong/Documents/engine_web-ifc/csharp/BazanCDE.ViewerApi/web-ifc-local`
+- Served route for these files:
+  - `/vendor/web-ifc/web-ifc-api-iife.js`
+  - `/vendor/web-ifc/web-ifc.wasm`
 - Model parsing for summaries uses `/Users/huyluong/Documents/engine_web-ifc/csharp/BazanCDE.Parsing`.

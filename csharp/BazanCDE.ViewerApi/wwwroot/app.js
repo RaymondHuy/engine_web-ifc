@@ -28,7 +28,7 @@ directionalLight.position.set(8, 16, 12);
 scene.add(directionalLight);
 
 const ifcApi = new WebIFC.IfcAPI();
-ifcApi.SetWasmPath("https://unpkg.com/web-ifc@0.0.75/", true);
+ifcApi.SetWasmPath("/vendor/web-ifc/", true);
 await ifcApi.Init();
 
 let loadedModels = [];
