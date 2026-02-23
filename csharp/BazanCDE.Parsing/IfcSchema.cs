@@ -13,4 +13,6 @@ public interface IIfcSchemaManager
     string GetSchemaName(IfcSchema schema);
     uint IfcTypeToTypeCode(string name);
     string IfcTypeCodeToType(uint typeCode);
+    bool IsIfcElement(uint typeCode);
+    IReadOnlySet<uint> GetIfcElementList();
 }

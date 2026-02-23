@@ -5,6 +5,7 @@ namespace BazanCDE.Parsing;
 public sealed class DefaultIfcSchemaManager : IIfcSchemaManager
 {
     private readonly uint[] _crcTable = new uint[256];
+    private readonly HashSet<uint> _ifcElements = new();
     private static readonly IReadOnlyList<IfcSchema> Schemas = new[]
     {
         IfcSchema.IFC2X3,
@@ -30,6 +31,15 @@ public sealed class DefaultIfcSchemaManager : IIfcSchemaManager
             }
 
             _crcTable[n] = c;
+        }
+
+        foreach (var ifcElementName in IfcElementTypeNames.Names)
+        {
+            var code = IfcTypeToTypeCode(ifcElementName);
+            if (code != 0)
+            {
+                _ifcElements.Add(code);
+            }
         }
     }
 
@@ -63,6 +73,16 @@ public sealed class DefaultIfcSchemaManager : IIfcSchemaManager
         return IfcTypeNameMap.CodeToName.TryGetValue(typeCode, out var name)
             ? name
             : string.Empty;
+    }
+
+    public bool IsIfcElement(uint typeCode)
+    {
+        return _ifcElements.Contains(typeCode);
+    }
+
+    public IReadOnlySet<uint> GetIfcElementList()
+    {
+        return _ifcElements;
     }
 
     private uint ComputeCrc32(string value)

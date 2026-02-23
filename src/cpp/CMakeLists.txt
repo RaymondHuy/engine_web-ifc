@@ -145,6 +145,10 @@ if(NOT EMSCRIPTEN)
 	param_setter(web-ifc)
 	target_include_directories(web-ifc PUBLIC ${tinycpptest_SOURCE_DIR}/Sources)
 
+	# parity dump utility (native C++ reference output for C# parity checks)
+	add_executable(web-ifc-parity ${web-ifc-source} "./test/parity-dump.cpp")
+	param_setter(web-ifc-parity)
+
 	# comment these to prevent debug files being generated
 	if(NOT RELEASE)
 		target_compile_options(web-ifc PUBLIC "-DCSG_DEBUG_OUTPUT")
