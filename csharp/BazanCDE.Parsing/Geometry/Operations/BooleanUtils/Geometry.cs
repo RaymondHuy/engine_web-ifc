@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 
-namespace BazanCDE.Parsing.Operations.BooleanUtils
+namespace BazanCDE.Parsing.Geometry.Operations.BooleanUtils
 {
     public readonly record struct SimplePlane(Vec3 Normal, double Distance, uint Id = 0);
     public readonly record struct Face(uint I0, uint I1, uint I2, uint PId);

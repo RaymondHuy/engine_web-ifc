@@ -1,4 +1,5 @@
-namespace BazanCDE.Parsing.Operations.BooleanUtils
+using BazanCDE.Parsing.Geometry.Operations.BooleanUtils;
+namespace BazanCDE.Parsing.Geometry.Operations
 {
     public readonly record struct Vec3(double X, double Y, double Z)
     {

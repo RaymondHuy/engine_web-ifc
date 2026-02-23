@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace BazanCDE.Parsing.Operations.BooleanUtils
+namespace BazanCDE.Parsing.Geometry.Operations.BooleanUtils
 {
     public struct PlaneBasis
     {

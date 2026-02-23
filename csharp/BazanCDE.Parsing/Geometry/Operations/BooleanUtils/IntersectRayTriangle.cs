@@ -1,6 +1,6 @@
 using System;
 
-namespace BazanCDE.Parsing.Operations.BooleanUtils
+namespace BazanCDE.Parsing.Geometry.Operations.BooleanUtils
 {
     public static partial class Utils
     {

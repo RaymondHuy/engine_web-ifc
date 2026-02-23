@@ -1,6 +1,4 @@
-using System;
-
-namespace BazanCDE.Parsing.Operations.BooleanUtils
+namespace BazanCDE.Parsing.Geometry.Operations.BooleanUtils
 {
     public class AABB
     {
