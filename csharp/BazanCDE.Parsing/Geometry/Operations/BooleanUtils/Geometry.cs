@@ -4,7 +4,8 @@ using System.Numerics;
 
 namespace BazanCDE.Parsing.Operations.BooleanUtils
 {
-    
+    public readonly record struct SimplePlane(Vec3 Normal, double Distance, uint Id = 0);
+    public readonly record struct Face(uint I0, uint I1, uint I2, uint PId);
     public class Geometry
     {
         public const int VERTEX_FORMAT_SIZE_FLOATS = 6;
