@@ -10,15 +10,15 @@ namespace BazanCDE.Parsing.Geometry.Operations.BooleanUtils
     {
         public const int VERTEX_FORMAT_SIZE_FLOATS = 6;
 
-        public List<float> FVertexData { get; } = new();
-        public List<double> VertexData { get; private set; } = new();
-        public List<uint> IndexData { get; private set; } = new();
-        public List<uint> PlaneData { get; } = new();
-        public List<SimplePlane> Planes { get; } = new();
+        public List<float> FVertexData { get; set; } = new();
+        public List<double> VertexData { get; set; } = new();
+        public List<uint> IndexData { get; set; } = new();
+        public List<uint> PlaneData { get; set; } = new();
+        public List<SimplePlane> Planes { get; set; } = new();
 
         public bool HasPlanes { get; set; } = false;
-        public uint NumPoints { get; private set; } = 0;
-        public uint NumFaces { get; private set; } = 0;
+        public uint NumPoints { get; set; } = 0;
+        public uint NumFaces { get; set; } = 0;
         public uint Data { get; set; } = 0;
 
         public void BuildFromVectors(List<double> d, List<uint> i)

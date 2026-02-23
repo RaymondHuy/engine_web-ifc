@@ -48,32 +48,32 @@ namespace BazanCDE.Parsing.Geometry.Operations.BimGeometry
 
             if (pType == 0)
             {
-                profile = GetIShapedCurve(width, depth, thickness, flangeThickness, hasFillet, filletRadius, placementMatrix);
+                profile = Utils.GetIShapedCurve(width, depth, thickness, flangeThickness, hasFillet, filletRadius, placementMatrix);
             }
 
             if (pType == 1)
             {
-                profile = GetCShapedCurve(width, depth, thickness, flangeThickness, hasFillet, filletRadius, placementMatrix);
+                profile = Utils.GetCShapedCurve(width, depth, thickness, flangeThickness, hasFillet, filletRadius, placementMatrix);
             }
 
             if (pType == 2)
             {
-                profile = GetZShapedCurve(width, depth, thickness, flangeThickness, hasFillet, filletRadius, placementMatrix);
+                profile = Utils.GetZShapedCurve(width, depth, thickness, flangeThickness, filletRadius, radius, placementMatrix);
             }
 
             if (pType == 3)
             {
-                profile = GetTShapedCurve(width, depth, thickness, hasFillet, filletRadius, radius, slope, placementMatrix);
+                profile = Utils.GetTShapedCurve(width, depth, thickness, hasFillet, filletRadius, radius, slope, placementMatrix);
             }
 
             if (pType == 4)
             {
-                profile = GetLShapedCurve(width, depth, thickness, hasFillet, filletRadius, radius, slope, numSegments, placementMatrix);
+                profile = Utils.GetLShapedCurve(width, depth, thickness, hasFillet, filletRadius, radius, slope, numSegments, placementMatrix);
             }
 
             if (pType == 5)
             {
-                profile = GetUShapedCurve(width, depth, thickness, flangeThickness, filletRadius, radius, slope, placementMatrix);
+                profile = Utils.GetUShapedCurve(width, depth, thickness, flangeThickness, filletRadius, radius, slope, placementMatrix);
             }
 
             for (var r = 0; r < profile.points.Count; r++)
@@ -98,84 +98,6 @@ namespace BazanCDE.Parsing.Geometry.Operations.BimGeometry
             }
 
             return matrix;
-        }
-
-        // NOTE: These shape builders are defined in bim-geometry/utils.h in C++.
-        // They are stubbed here until the corresponding utility conversions are added.
-        private static Curve GetIShapedCurve(double width, double depth, double thickness, double flangeThickness, bool hasFillet, double filletRadius, double[] placement)
-        {
-            _ = width;
-            _ = depth;
-            _ = thickness;
-            _ = flangeThickness;
-            _ = hasFillet;
-            _ = filletRadius;
-            _ = placement;
-            throw new NotImplementedException("GetIShapedCurve is not ported yet.");
-        }
-
-        private static Curve GetCShapedCurve(double width, double depth, double thickness, double flangeThickness, bool hasFillet, double filletRadius, double[] placement)
-        {
-            _ = width;
-            _ = depth;
-            _ = thickness;
-            _ = flangeThickness;
-            _ = hasFillet;
-            _ = filletRadius;
-            _ = placement;
-            throw new NotImplementedException("GetCShapedCurve is not ported yet.");
-        }
-
-        private static Curve GetZShapedCurve(double width, double depth, double thickness, double flangeThickness, bool hasFillet, double filletRadius, double[] placement)
-        {
-            _ = width;
-            _ = depth;
-            _ = thickness;
-            _ = flangeThickness;
-            _ = hasFillet;
-            _ = filletRadius;
-            _ = placement;
-            throw new NotImplementedException("GetZShapedCurve is not ported yet.");
-        }
-
-        private static Curve GetTShapedCurve(double width, double depth, double thickness, bool hasFillet, double filletRadius, double radius, double slope, double[] placement)
-        {
-            _ = width;
-            _ = depth;
-            _ = thickness;
-            _ = hasFillet;
-            _ = filletRadius;
-            _ = radius;
-            _ = slope;
-            _ = placement;
-            throw new NotImplementedException("GetTShapedCurve is not ported yet.");
-        }
-
-        private static Curve GetLShapedCurve(double width, double depth, double thickness, bool hasFillet, double filletRadius, double radius, double slope, ushort numSegments, double[] placement)
-        {
-            _ = width;
-            _ = depth;
-            _ = thickness;
-            _ = hasFillet;
-            _ = filletRadius;
-            _ = radius;
-            _ = slope;
-            _ = numSegments;
-            _ = placement;
-            throw new NotImplementedException("GetLShapedCurve is not ported yet.");
-        }
-
-        private static Curve GetUShapedCurve(double width, double depth, double thickness, double flangeThickness, double filletRadius, double radius, double slope, double[] placement)
-        {
-            _ = width;
-            _ = depth;
-            _ = thickness;
-            _ = flangeThickness;
-            _ = filletRadius;
-            _ = radius;
-            _ = slope;
-            _ = placement;
-            throw new NotImplementedException("GetUShapedCurve is not ported yet.");
         }
     }
 }
