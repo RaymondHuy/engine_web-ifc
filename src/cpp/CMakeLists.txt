@@ -19,6 +19,8 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+option(WEB_IFC_ENABLE_DROGON_API "Build web-ifc-drogon-api example server (native only)" ON)
+set(WEB_IFC_API_DEFAULT_PORT "18080" CACHE STRING "Default HTTP port for web-ifc-drogon-api")
 
 # collect source files
 file(GLOB_RECURSE web-ifc-source web-ifc/*.cpp)
@@ -148,6 +150,56 @@ if(NOT EMSCRIPTEN)
 	# parity dump utility (native C++ reference output for C# parity checks)
 	add_executable(web-ifc-parity ${web-ifc-source} "./test/parity-dump.cpp")
 	param_setter(web-ifc-parity)
+
+	if(WEB_IFC_ENABLE_DROGON_API)
+		Message("Downloading JsonCpp")
+		set(JSONCPP_WITH_TESTS OFF CACHE BOOL "Disable jsoncpp tests in embedded build" FORCE)
+		set(JSONCPP_WITH_POST_BUILD_UNITTEST OFF CACHE BOOL "Disable jsoncpp post-build tests in embedded build" FORCE)
+		set(JSONCPP_WITH_EXAMPLE OFF CACHE BOOL "Disable jsoncpp examples in embedded build" FORCE)
+		set(JSONCPP_WITH_PKGCONFIG_SUPPORT OFF CACHE BOOL "Disable jsoncpp pkg-config generation in embedded build" FORCE)
+
+		FetchContent_Declare(
+			jsoncpp
+			GIT_REPOSITORY "https://github.com/open-source-parsers/jsoncpp"
+			GIT_TAG "1.9.6"
+		)
+		FetchContent_MakeAvailable(jsoncpp)
+		FetchContent_GetProperties(jsoncpp)
+
+		set(JSONCPP_INCLUDE_DIRS "${jsoncpp_SOURCE_DIR}/include" CACHE PATH "jsoncpp include dir" FORCE)
+		if(TARGET jsoncpp_lib)
+			set(JSONCPP_LIBRARIES jsoncpp_lib CACHE STRING "jsoncpp library" FORCE)
+		elseif(TARGET jsoncpp_static)
+			set(JSONCPP_LIBRARIES jsoncpp_static CACHE STRING "jsoncpp library" FORCE)
+		else()
+			message(FATAL_ERROR "Could not resolve JsonCpp target after FetchContent.")
+		endif()
+
+		Message("Downloading Drogon")
+		set(BUILD_CTL OFF CACHE BOOL "Disable drogon_ctl in embedded build" FORCE)
+		set(BUILD_EXAMPLES OFF CACHE BOOL "Disable drogon examples in embedded build" FORCE)
+		set(BUILD_ORM OFF CACHE BOOL "Disable drogon ORM generator in embedded build" FORCE)
+
+		FetchContent_Declare(
+			drogon
+			GIT_REPOSITORY "https://github.com/drogonframework/drogon"
+			GIT_TAG "v1.9.11"
+		)
+		FetchContent_MakeAvailable(drogon)
+		FetchContent_GetProperties(drogon)
+
+		if(TARGET Drogon::Drogon)
+			set(WEB_IFC_DROGON_TARGET Drogon::Drogon)
+		elseif(TARGET drogon)
+			set(WEB_IFC_DROGON_TARGET drogon)
+		else()
+			message(FATAL_ERROR "Could not resolve Drogon target after FetchContent.")
+		endif()
+
+		add_executable(web-ifc-drogon-api "./api/web_ifc_drogon_main.cpp")
+		target_compile_definitions(web-ifc-drogon-api PRIVATE WEB_IFC_API_DEFAULT_PORT=${WEB_IFC_API_DEFAULT_PORT})
+		target_link_libraries(web-ifc-drogon-api PRIVATE web-ifc-library ${WEB_IFC_DROGON_TARGET})
+	endif()
 
 	# comment these to prevent debug files being generated
 	if(NOT RELEASE)
