@@ -333,7 +333,7 @@ namespace BazanCDE.Parsing.Geometry.Representation
         {
             if (!CylinderSurface.Active && !BSplineSurface.Active && !RevolutionSurface.Active)
             {
-                return RepresentationMath.MatrixCol3(transformation, 2);
+                // todo return RepresentationMath.MatrixCol3(transformation, 2);
             }
 
             if (BSplineSurface.Active)

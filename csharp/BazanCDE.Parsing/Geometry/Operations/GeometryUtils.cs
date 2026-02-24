@@ -676,28 +676,31 @@ namespace BazanCDE.Parsing.Geometry.Operations
 
         public static Vec3? GetOriginRec(IfcComposedMesh mesh, Dictionary<uint, IfcGeometry> geometryMap, double[] mat)
         {
-            var newMat = MatrixMultiply4(mat, mesh.transformation);
-
-            if (geometryMap.TryGetValue(mesh.expressID, out var meshGeom) && meshGeom.numFaces > 0)
-            {
-                for (uint i = 0; i < meshGeom.numFaces; i++)
-                {
-                    var f = meshGeom.GetFace(i);
-                    var a = TransformPoint4(newMat, meshGeom.GetPoint(f.i0));
-                    return a;
-                }
-            }
-
-            for (var i = 0; i < mesh.children.Count; i++)
-            {
-                var v = GetOriginRec(mesh.children[i], geometryMap, newMat);
-                if (v.HasValue)
-                {
-                    return v;
-                }
-            }
-
             return null;
+            
+            // todo
+            // var newMat = MatrixMultiply4(mat, mesh.transformation);
+            //
+            // if (geometryMap.TryGetValue(mesh.expressID, out var meshGeom) && meshGeom.numFaces > 0)
+            // {
+            //     for (uint i = 0; i < meshGeom.numFaces; i++)
+            //     {
+            //         var f = meshGeom.GetFace(i);
+            //         var a = TransformPoint4(newMat, meshGeom.GetPoint(f.i0));
+            //         return a;
+            //     }
+            // }
+            //
+            // for (var i = 0; i < mesh.children.Count; i++)
+            // {
+            //     var v = GetOriginRec(mesh.children[i], geometryMap, newMat);
+            //     if (v.HasValue)
+            //     {
+            //         return v;
+            //     }
+            // }
+            //
+            // return null;
         }
 
         public static Vec3 GetOrigin(IfcComposedMesh mesh, Dictionary<uint, IfcGeometry> geometryMap)
@@ -796,18 +799,20 @@ namespace BazanCDE.Parsing.Geometry.Operations
 
         public static void flattenRecursive(IfcComposedMesh mesh, Dictionary<uint, IfcGeometry> geometryMap, List<IfcGeometry> geoms, double[] mat)
         {
-            var newMat = MatrixMultiply4(mat, mesh.transformation);
-            var transformationBreaksWinding = MatrixFlipsTriangles(newMat);
-
-            if (geometryMap.TryGetValue(mesh.expressID, out var meshGeom))
-            {
-                geoms.AddRange(transformIfcGeometry(meshGeom, newMat, transformationBreaksWinding));
-            }
-
-            for (var i = 0; i < mesh.children.Count; i++)
-            {
-                flattenRecursive(mesh.children[i], geometryMap, geoms, newMat);
-            }
+            return;
+            // todo
+            // var newMat = MatrixMultiply4(mat, mesh.transformation);
+            // var transformationBreaksWinding = MatrixFlipsTriangles(newMat);
+            //
+            // if (geometryMap.TryGetValue(mesh.expressID, out var meshGeom))
+            // {
+            //     geoms.AddRange(transformIfcGeometry(meshGeom, newMat, transformationBreaksWinding));
+            // }
+            //
+            // for (var i = 0; i < mesh.children.Count; i++)
+            // {
+            //     flattenRecursive(mesh.children[i], geometryMap, geoms, newMat);
+            // }
         }
 
         public static List<IfcGeometry> flatten(IfcComposedMesh mesh, Dictionary<uint, IfcGeometry> geometryMap, double[]? mat = null)
