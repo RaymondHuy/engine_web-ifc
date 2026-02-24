@@ -281,13 +281,7 @@ namespace BazanCDE.Parsing.Geometry.Representation
     public sealed class IfcComposedMesh
     {
         public Vec4 color;
-        public double[] transformation =
-        {
-            1, 0, 0, 0,
-            0, 1, 0, 0,
-            0, 0, 1, 0,
-            0, 0, 0, 1
-        };
+        public Mat4 transformation = Mat4.Identity;
         public uint expressID;
         public bool hasGeometry = false;
         public bool hasColor = false;
@@ -328,13 +322,7 @@ namespace BazanCDE.Parsing.Geometry.Representation
 
     public sealed class IfcSurface
     {
-        public double[] transformation =
-        {
-            1, 0, 0, 0,
-            0, 1, 0, 0,
-            0, 0, 1, 0,
-            0, 0, 0, 1
-        };
+        public Mat4 transformation = Mat4.Identity;
 
         public BSpline BSplineSurface = new();
         public Cylinder CylinderSurface = new();
