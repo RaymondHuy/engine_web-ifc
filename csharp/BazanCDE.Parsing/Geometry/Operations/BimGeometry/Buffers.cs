@@ -1,3 +1,4 @@
+using BazanCDE.Parsing.Utilities;
 namespace BazanCDE.Parsing.Geometry.Operations.BimGeometry
 {
     public sealed class Buffers

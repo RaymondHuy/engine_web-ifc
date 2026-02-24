@@ -1,4 +1,4 @@
-namespace BazanCDE.Parsing.Geometry.Operations
+namespace BazanCDE.Parsing.Utilities
 {
     public readonly record struct Vec4(double X, double Y, double Z, double W)
     {

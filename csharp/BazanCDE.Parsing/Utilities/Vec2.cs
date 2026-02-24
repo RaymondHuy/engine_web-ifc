@@ -1,5 +1,5 @@
 using BazanCDE.Parsing.Geometry.Operations.BooleanUtils;
-namespace BazanCDE.Parsing.Geometry.Operations
+namespace BazanCDE.Parsing.Utilities
 {
     public readonly record struct Vec2(double X, double Y)
     {

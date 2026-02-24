@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using BazanCDE.Parsing.Utilities;
 
 namespace BazanCDE.Parsing.Geometry.Operations.BooleanUtils
 {

@@ -1,3 +1,4 @@
+using BazanCDE.Parsing.Utilities;
 namespace BazanCDE.Parsing.Geometry.Operations.BimGeometry
 {
     public class Sweep
@@ -59,10 +60,10 @@ namespace BazanCDE.Parsing.Geometry.Operations.BimGeometry
                 rotate90,
                 optimize);
 
-            for (var r = 0; r < geom.NumFaces; r++)
+            for (var r = 0; r < geom.numFaces; r++)
             {
                 var f = geom.GetFace((int)r);
-                buffers.AddTri(geom.GetPoint(f.I0), geom.GetPoint(f.I1), geom.GetPoint(f.I2));
+                buffers.AddTri(geom.GetPoint(f.i0), geom.GetPoint(f.i1), geom.GetPoint(f.i2));
             }
 
             return buffers;

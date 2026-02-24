@@ -1,3 +1,4 @@
+using BazanCDE.Parsing.Utilities;
 namespace BazanCDE.Parsing.Geometry.Operations.BimGeometry
 {
     public class Extrusion
@@ -63,7 +64,7 @@ namespace BazanCDE.Parsing.Geometry.Operations.BimGeometry
         {
             var buffers = new Buffers();
 
-            BazanCDE.Parsing.Geometry.Operations.BooleanUtils.Geometry geom;
+            Geometry geom;
             if (!cap)
             {
                 geom = Utils.Extrude(profile, dir, len);
@@ -94,10 +95,10 @@ namespace BazanCDE.Parsing.Geometry.Operations.BimGeometry
                 geom = Utils.Extrude(profiles, dir, len, cuttingPlaneNormal, cuttingPlanePos);
             }
 
-            for (var r = 0; r < geom.NumFaces; r++)
+            for (var r = 0; r < geom.numFaces; r++)
             {
                 var f = geom.GetFace((int)r);
-                buffers.AddTri(geom.GetPoint(f.I0), geom.GetPoint(f.I1), geom.GetPoint(f.I2));
+                buffers.AddTri(geom.GetPoint(f.i0), geom.GetPoint(f.i1), geom.GetPoint(f.i2));
             }
 
             return buffers;

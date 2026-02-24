@@ -1,4 +1,4 @@
-using BoolGeometry = BazanCDE.Parsing.Geometry.Operations.BooleanUtils.Geometry;
+using BazanCDE.Parsing.Utilities;
 
 namespace BazanCDE.Parsing.Geometry.Operations.BimGeometry
 {
@@ -131,9 +131,9 @@ namespace BazanCDE.Parsing.Geometry.Operations.BimGeometry
             return Vec3.Dot(norm, new Vec3(0, 0, 1)) > 0.0;
         }
 
-        public static BoolGeometry Revolution(double[] transform, double startDegrees, double endDegrees, List<Vec3> profile, double numRots)
+        public static Geometry Revolution(double[] transform, double startDegrees, double endDegrees, List<Vec3> profile, double numRots)
         {
-            var geometry = new BoolGeometry();
+            var geometry = new Geometry();
             var m = Matrix4OrIdentity(transform);
 
             var cent = GetColumn4(m, 3);
@@ -204,9 +204,9 @@ namespace BazanCDE.Parsing.Geometry.Operations.BimGeometry
             return geometry;
         }
 
-        public static BoolGeometry RevolveCylinder(double[] transform, double startDegrees, double endDegrees, double minZ, double maxZ, int numRots, double radius)
+        public static Geometry RevolveCylinder(double[] transform, double startDegrees, double endDegrees, double minZ, double maxZ, int numRots, double radius)
         {
-            var geometry = new BoolGeometry();
+            var geometry = new Geometry();
             var m = Matrix4OrIdentity(transform);
 
             var cent = GetColumn4(m, 3);
@@ -542,9 +542,9 @@ namespace BazanCDE.Parsing.Geometry.Operations.BimGeometry
             return points;
         }
 
-        public static BoolGeometry Extrude(List<Vec3> points, Vec3 dir, double len)
+        public static Geometry Extrude(List<Vec3> points, Vec3 dir, double len)
         {
-            var geom = new BoolGeometry();
+            var geom = new Geometry();
 
             for (var j = 0; j < points.Count - 1; j++)
             {
@@ -628,14 +628,14 @@ namespace BazanCDE.Parsing.Geometry.Operations.BimGeometry
             return poly2D;
         }
 
-        public static BoolGeometry Extrude(
+        public static Geometry Extrude(
             List<List<Vec3>> profile,
             Vec3 dir,
             double distance,
             Vec3? cuttingPlaneNormal = null,
             Vec3? cuttingPlanePos = null)
         {
-            var geom = new BoolGeometry();
+            var geom = new Geometry();
             var holesIndicesHash = new List<bool>();
             var cuttingNormal = cuttingPlaneNormal ?? new Vec3(0, 0, 0);
             var cuttingPos = cuttingPlanePos ?? new Vec3(0, 0, 0);
@@ -721,7 +721,7 @@ namespace BazanCDE.Parsing.Geometry.Operations.BimGeometry
                     }
                 }
 
-                offset += geom.NumPoints;
+                offset += geom.numPoints;
                 normal = dir * -1.0;
 
                 for (var i = 0; i < profile[0].Count; i++)
@@ -790,7 +790,7 @@ namespace BazanCDE.Parsing.Geometry.Operations.BimGeometry
             return point + dist * dir;
         }
 
-        public static BoolGeometry SweepFunction(
+        public static Geometry SweepFunction(
             double scaling,
             bool closed,
             IReadOnlyList<Vec3> profilePoints,
@@ -799,7 +799,7 @@ namespace BazanCDE.Parsing.Geometry.Operations.BimGeometry
             bool rotate90 = false,
             bool optimize = true)
         {
-            var geom = new BoolGeometry();
+            var geom = new Geometry();
             var dpts = new List<Vec3>();
 
             for (var i = 0; i < directrix.Count; i++)
@@ -965,7 +965,7 @@ namespace BazanCDE.Parsing.Geometry.Operations.BimGeometry
             return geom;
         }
 
-        public static BoolGeometry SweepCircular(
+        public static Geometry SweepCircular(
             double scaling,
             bool closed,
             IReadOnlyList<Vec3> profile,
@@ -974,7 +974,7 @@ namespace BazanCDE.Parsing.Geometry.Operations.BimGeometry
             Vec3? initialDirectrixNormal = null,
             bool rotate90 = false)
         {
-            var geom = new BoolGeometry();
+            var geom = new Geometry();
             var dpts = new List<Vec3>();
 
             for (var i = 0; i < directrix.Count; i++)
@@ -1151,7 +1151,7 @@ namespace BazanCDE.Parsing.Geometry.Operations.BimGeometry
                     var len2 = Vec3.Dot(n, n);
                     n = len2 > 0.0 ? n / Math.Sqrt(len2) : new Vec3(0, 0, 1);
                     geom.AddPoint(pts[p], n);
-                    indices.Add(geom.NumPoints - 1);
+                    indices.Add(geom.numPoints - 1);
                 }
 
                 curvePointIndices.Add(indices);
@@ -1178,9 +1178,9 @@ namespace BazanCDE.Parsing.Geometry.Operations.BimGeometry
             return geom;
         }
 
-        public static BoolGeometry SectionedSurface(List<List<Vec3>> profiles, bool buildCaps, double eps = 0.0)
+        public static Geometry SectionedSurface(List<List<Vec3>> profiles, bool buildCaps, double eps = 0.0)
         {
-            var geom = new BoolGeometry();
+            var geom = new Geometry();
 
             if (profiles.Count < 2)
             {
@@ -1223,8 +1223,8 @@ namespace BazanCDE.Parsing.Geometry.Operations.BimGeometry
                     geom.AddPoint(p1, normal);
                     geom.AddPoint(p2, normal);
 
-                    indices.Add(geom.NumPoints - 2);
-                    indices.Add(geom.NumPoints - 1);
+                    indices.Add(geom.numPoints - 2);
+                    indices.Add(geom.numPoints - 1);
                 }
 
                 for (var j = 0; j < indices.Count - 2; j += 2)
@@ -1282,7 +1282,7 @@ namespace BazanCDE.Parsing.Geometry.Operations.BimGeometry
                         avgNormal = Vec3.Normalize(avgNormal);
                     }
 
-                    var baseIndex = geom.NumPoints;
+                    var baseIndex = geom.numPoints;
                     for (var i = 0; i < profile.Count; i++)
                     {
                         var normal = capIdx == 0 ? avgNormal * -1.0 : avgNormal;
