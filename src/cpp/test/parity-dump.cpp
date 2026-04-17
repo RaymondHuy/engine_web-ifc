@@ -5,17 +5,87 @@
 #include <algorithm>
 #include <cstring>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <unordered_set>
 #include <vector>
 
 #include "../web-ifc/parsing/IfcLoader.h"
 #include "../web-ifc/schema/IfcSchemaManager.h"
+#include "../web-ifc/geometry/IfcGeometryLoader.h"
 #include "../web-ifc/geometry/IfcGeometryProcessor.h"
 
 namespace
 {
+    enum class Projection
+    {
+        XY,
+        XZ,
+        YZ
+    };
+
+    double Area2D(const std::vector<glm::dvec3> &ring, Projection projection)
+    {
+        if (ring.size() < 3)
+        {
+            return 0;
+        }
+
+        double area = 0;
+        for (size_t i = 0; i < ring.size(); i++)
+        {
+            const auto &a = ring[i];
+            const auto &b = ring[(i + 1) % ring.size()];
+            switch (projection)
+            {
+            case Projection::XY:
+                area += a.x * b.y - b.x * a.y;
+                break;
+            case Projection::XZ:
+                area += a.x * b.z - b.x * a.z;
+                break;
+            default:
+                area += a.y * b.z - b.y * a.z;
+                break;
+            }
+        }
+
+        return std::abs(area * 0.5);
+    }
+
+    Projection BestProjection(const std::vector<glm::dvec3> &ring)
+    {
+        const auto areaXY = Area2D(ring, Projection::XY);
+        const auto areaXZ = Area2D(ring, Projection::XZ);
+        const auto areaYZ = Area2D(ring, Projection::YZ);
+        if (areaXY >= areaXZ && areaXY >= areaYZ)
+        {
+            return Projection::XY;
+        }
+
+        if (areaXZ >= areaYZ)
+        {
+            return Projection::XZ;
+        }
+
+        return Projection::YZ;
+    }
+
+    const char *ProjectionName(Projection projection)
+    {
+        switch (projection)
+        {
+        case Projection::XY:
+            return "XY";
+        case Projection::XZ:
+            return "XZ";
+        default:
+            return "YZ";
+        }
+    }
+
     std::string ReadFile(const std::string &path)
     {
         std::ifstream file(path, std::ios::binary);
@@ -72,6 +142,25 @@ namespace
         uint32_t expressId = 0;
         uint32_t triangleCount = 0;
     };
+
+    std::vector<uint32_t> ParseIdList(const std::string &csv)
+    {
+        std::vector<uint32_t> ids;
+        std::stringstream ss(csv);
+        std::string item;
+        while (std::getline(ss, item, ','))
+        {
+            if (item.empty())
+            {
+                continue;
+            }
+
+            const auto value = static_cast<uint32_t>(std::stoul(item));
+            ids.push_back(value);
+        }
+
+        return ids;
+    }
 }
 
 int main(int argc, char **argv)
@@ -83,6 +172,11 @@ int main(int argc, char **argv)
     }
 
     const std::string inputPath = argv[1];
+    std::vector<uint32_t> debugExpressIds;
+    if (argc >= 3)
+    {
+        debugExpressIds = ParseIdList(argv[2]);
+    }
 
     try
     {
@@ -121,6 +215,18 @@ int main(int argc, char **argv)
             schemaManager,
             circleSegments,
             coordinateToOrigin,
+            tolerancePlaneIntersection,
+            tolerancePlaneDeviation,
+            toleranceBackDeviationDistance,
+            toleranceInsideOutsidePerimeter,
+            toleranceScalarEquality,
+            planeRefitIterations,
+            booleanUnionThreshold);
+
+        webifc::geometry::IfcGeometryLoader geometryLoader(
+            loader,
+            schemaManager,
+            circleSegments,
             tolerancePlaneIntersection,
             tolerancePlaneDeviation,
             toleranceBackDeviationDistance,
@@ -168,6 +274,65 @@ int main(int argc, char **argv)
             {
                 return left.expressId < right.expressId;
             });
+
+        if (!debugExpressIds.empty())
+        {
+            const auto extrudedType = schemaManager.IfcTypeToTypeCode("IFCEXTRUDEDAREASOLID");
+            for (const auto expressId : debugExpressIds)
+            {
+                const auto lineType = loader.GetLineType(expressId);
+                if (lineType != extrudedType)
+                {
+                    const auto curve = geometryLoader.GetCurve(expressId, 2);
+                    if (curve.points.empty())
+                    {
+                        std::cerr << "[debug] #" << expressId << " unsupported type" << std::endl;
+                        continue;
+                    }
+
+                    std::cerr << "[curve-debug] #" << expressId
+                              << " points=" << curve.points.size();
+                    for (size_t i = 0; i < curve.points.size(); i++)
+                    {
+                        const auto &p = curve.points[i];
+                        std::cerr << std::setprecision(17);
+                        std::cerr << " p" << i << "="
+                                  << p.x << "," << p.y << "," << p.z;
+                    }
+                    std::cerr
+                              << std::endl;
+                    continue;
+                }
+
+                loader.MoveToArgumentOffset(expressId, 0);
+                const auto profileId = loader.GetRefArgument();
+                const auto profile = geometryLoader.GetProfile(profileId);
+                const bool outerClosed = !profile.curve.points.empty() &&
+                    glm::length(profile.curve.points.front() - profile.curve.points.back()) <= 1e-8;
+                const auto projection = BestProjection(profile.curve.points);
+                const auto areaXY = Area2D(profile.curve.points, Projection::XY);
+                const auto areaXZ = Area2D(profile.curve.points, Projection::XZ);
+                const auto areaYZ = Area2D(profile.curve.points, Projection::YZ);
+                std::cerr << "[profile-debug] solid #" << expressId
+                          << " profile #" << profileId
+                          << " outerPoints=" << profile.curve.points.size()
+                          << " outerClosed=" << (outerClosed ? "T" : "F")
+                          << " projection=" << ProjectionName(projection)
+                          << " areaXY=" << areaXY
+                          << " areaXZ=" << areaXZ
+                          << " areaYZ=" << areaYZ
+                          << " holes=" << profile.holes.size();
+                for (size_t i = 0; i < profile.holes.size(); i++)
+                {
+                    const auto& hole = profile.holes[i];
+                    const bool holeClosed = !hole.points.empty() &&
+                        glm::length(hole.points.front() - hole.points.back()) <= 1e-8;
+                    std::cerr << " hole" << i << "Points=" << hole.points.size()
+                              << " hole" << i << "Closed=" << (holeClosed ? "T" : "F");
+                }
+                std::cerr << std::endl;
+            }
+        }
 
         std::cout << "{";
         std::cout << "\"meshCount\":" << meshes.size() << ",";
