@@ -41,7 +41,7 @@ namespace webifc::parsing {
      std::vector<uint32_t> ret;
      for (size_t i=0; i < _headerLines.size();i++)
      {
-        if (_headerLines[i]->ifcType==type) ret.push_back(i);
+        if (_headerLines[i].ifcType==type) ret.push_back(i);
      }
      return ret;
    }
@@ -94,20 +94,20 @@ namespace webifc::parsing {
       uint32_t linesWritten = 0;
       for (uint8_t z=0; z < 2; z++)
       {
-        std::vector<IfcLine*>* currentLines;
-        if(z==0) currentLines= (std::vector<IfcLine*>*) &_headerLines;
+        std::vector<IfcLine>* currentLines;
+        if(z==0) currentLines= (std::vector<IfcLine>*) &_headerLines;
         else {
-          currentLines =  new std::vector<IfcLine*>();
+          currentLines =  new std::vector<IfcLine>();
           std::transform( _lines.begin(), _lines.end(), std::back_inserter( *currentLines ), [](auto &kv){ return kv.second;}  );
         }
 		if (orderLinesByExpressID) {
 			// Sort based on tapeOffset, which preserves the order by which the lines have been pushed
-			std::sort(currentLines->begin(), currentLines->end(), [](const IfcLine* a, const IfcLine* b) { return a->tapeOffset < b->tapeOffset; });
+			std::sort(currentLines->begin(), currentLines->end(), [](const IfcLine& a, const IfcLine& b) { return a.tapeOffset < b.tapeOffset; });
 		}
         for(uint32_t i=0; i < currentLines->size();i++)
         {
        
-          IfcLine * line = (*currentLines)[i];
+          IfcLine * line = &(*currentLines)[i];
 
           if (line->ifcType == 0) continue;
           _tokenStream->MoveTo(line->tapeOffset);
@@ -240,9 +240,9 @@ namespace webifc::parsing {
   				{
             if (currentIfcType !=0)
   					{
-  						IfcLine* l = new IfcLine();
-  						l->ifcType = currentIfcType;
-  						l->tapeOffset = currentTapeOffset;
+  						IfcLine l = IfcLine();
+  						l.ifcType = currentIfcType;
+  						l.tapeOffset = currentTapeOffset;
   						if(currentIfcType == webifc::schema::FILE_DESCRIPTION || currentIfcType == webifc::schema::FILE_NAME || currentIfcType == webifc::schema::FILE_SCHEMA )
               {
                 _headerLines.push_back(l);
@@ -315,14 +315,12 @@ namespace webifc::parsing {
           return 0;
       }
 
-      return lineIt->second->ifcType;
+      return lineIt->second.ifcType;
    }
    
    IfcLoader::~IfcLoader()
    { 
       delete _tokenStream;
-      for (const auto & [key, value] : _lines) delete value;
-      for (size_t i=0; i < _headerLines.size();i++) delete _headerLines[i];
       _lines.clear();
       _headerLines.clear();
    }
@@ -331,13 +329,13 @@ namespace webifc::parsing {
    {
        const auto lineIt = _lines.find(expressID);
        if (lineIt == _lines.end()) return;
-       _tokenStream->MoveTo(lineIt->second->tapeOffset);
+       _tokenStream->MoveTo(lineIt->second.tapeOffset);
        ArgumentOffset(argumentIndex);
    }
    
    void IfcLoader::MoveToHeaderLineArgument(const uint32_t lineID, const uint32_t argumentIndex) const
    { 
-     _tokenStream->MoveTo(_headerLines[lineID]->tapeOffset);
+     _tokenStream->MoveTo(_headerLines[lineID].tapeOffset);
    	 ArgumentOffset(argumentIndex);	
    }
    
@@ -403,7 +401,7 @@ namespace webifc::parsing {
       uint32_t prevLine = 0;
       uint32_t pos = _tokenStream->GetReadOffset();
       for (const auto & [key, value] : _lines) {
-         if (value->tapeOffset > pos) break;
+         if (value.tapeOffset > pos) break;
          prevLine = key;
       }
       return prevLine;
@@ -441,26 +439,26 @@ namespace webifc::parsing {
       const auto lineIt = _lines.find(expressID);
       if (lineIt == _lines.end()) {
         // create line object
-  		IfcLine * line = new IfcLine();
+  		IfcLine line = IfcLine();
   		// fill line data
-  		line->ifcType = type;
-        line->tapeOffset = start;
+  		line.ifcType = type;
+        line.tapeOffset = start;
         //place in vector
         _lines[expressID]=line;
   		_ifcTypeToExpressID[type].push_back(expressID);
         _maxExpressId = std::max(expressID, _maxExpressId);
       }
       else {
-          _lines[expressID]->tapeOffset = start;
+          _lines[expressID].tapeOffset = start;
       }
   }
 
   void IfcLoader::AddHeaderLineTape(const uint32_t type, const uint32_t start)
   {
     
-      IfcLine *l = new IfcLine();
-      l->ifcType = type;
-      l->tapeOffset = start;
+      IfcLine l = IfcLine();
+      l.ifcType = type;
+      l.tapeOffset = start;
       _headerLines.push_back(l);
   }
   
@@ -662,7 +660,7 @@ namespace webifc::parsing {
    {
       const auto lineIt = _lines.find(expressID);
       if (lineIt == _lines.end()) return 0;
-      _tokenStream->MoveTo(lineIt->second->tapeOffset);
+      _tokenStream->MoveTo(lineIt->second.tapeOffset);
       _tokenStream->Read<char>();
       _tokenStream->Read<uint32_t>();
       _tokenStream->Read<char>();
@@ -707,7 +705,7 @@ namespace webifc::parsing {
        const auto lineIt = _lines.find(expressID);
        if (lineIt == _lines.end()) return;
 
-        _tokenStream->MoveTo(lineIt->second->tapeOffset);
+        _tokenStream->MoveTo(lineIt->second.tapeOffset);
    	    ArgumentOffset(argumentIndex);
    }
    
@@ -756,7 +754,7 @@ namespace webifc::parsing {
       return new IfcLoader(_maxExpressId, _lineWriterBuffer,_schemaManager,  _tokenStream->Clone(), _lines, _headerLines, _ifcTypeToExpressID);
     }
 
-    IfcLoader::IfcLoader(uint32_t maxExpressId,uint32_t lineWriterBuffer, const schema::IfcSchemaManager &schemaManager, IfcTokenStream * tokenStream, std::unordered_map<uint32_t,IfcLine*> &lines, std::vector<IfcLine*> &headerLines,std::unordered_map<uint32_t, std::vector<uint32_t>> &ifcTypeToExpressID)
+    IfcLoader::IfcLoader(uint32_t maxExpressId,uint32_t lineWriterBuffer, const schema::IfcSchemaManager &schemaManager, IfcTokenStream * tokenStream, ankerl::unordered_dense::map<uint32_t, IfcLine> &lines, std::vector<IfcLine> &headerLines,std::unordered_map<uint32_t, std::vector<uint32_t>> &ifcTypeToExpressID)
       : _maxExpressId(maxExpressId) , _lineWriterBuffer(lineWriterBuffer), _schemaManager(schemaManager), _tokenStream(tokenStream), _lines(lines) , _headerLines(headerLines), _ifcTypeToExpressID(ifcTypeToExpressID)
     {}
     

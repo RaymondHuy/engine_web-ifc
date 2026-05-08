@@ -29,46 +29,12 @@ namespace webifc::parsing
     return Clear(false);
   }
   
-  size_t IfcTokenStream::IfcTokenChunk::GetTokenRef()
-  {
-    return _startRef;
-  }
-  
-  size_t IfcTokenStream::IfcTokenChunk::TokenSize()
-  {
-    return _currentSize;
-  }
-  
-  bool IfcTokenStream::IfcTokenChunk::IsLoaded() 
-  {
-    return _loaded;
-  }
-
-  size_t IfcTokenStream::IfcTokenChunk::GetMaxSize() 
-  {
-    return _chunkSize;
-  }
-  
   std::string_view IfcTokenStream::IfcTokenChunk::ReadString(const size_t ptr,const size_t size) 
   {
   		if (!_loaded) Load();
       return std::string_view((char*)_chunkData+ptr,size);
   }
-  
-  void IfcTokenStream::IfcTokenChunk::Push(void *v, const size_t size)
-  {
-      if (_chunkData == nullptr) _chunkData =  new uint8_t[_chunkSize];
-      _currentSize+=size;
-      if (_currentSize > _chunkSize) {
-          uint8_t * tmp = _chunkData;
-          _chunkData = new uint8_t[_currentSize];
-          std::memcpy(_chunkData, tmp, _currentSize-size);
-          _chunkSize = _currentSize;
-          delete[] tmp;
-      }
-      std::memcpy(_chunkData + _currentSize - size, v, size);
-  }
-  
+    
   void IfcTokenStream::IfcTokenChunk::Load()
   {
       _chunkData = new uint8_t[_chunkSize];

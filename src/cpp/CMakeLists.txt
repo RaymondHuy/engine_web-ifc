@@ -43,7 +43,7 @@ FetchContent_MakeAvailable(tinycpptest)
 FetchContent_GetProperties(tinycpptest)
 
 Message("Downloading GLM")
-FetchContent_Declare(glm GIT_REPOSITORY "https://github.com/g-truc/glm" GIT_TAG "0af55ccecd98d4e5a8d1fad7de25ba429d60e863" SOURCE_SUBDIR "../")
+FetchContent_Declare(glm GIT_REPOSITORY "https://github.com/g-truc/glm" GIT_TAG "8d1fd52e5ab5590e2c81768ace50c72bae28f2ed" SOURCE_SUBDIR "../")
 FetchContent_MakeAvailable(glm)
 FetchContent_GetProperties(glm)
 
@@ -105,11 +105,11 @@ if(EMSCRIPTEN)
 	# build parameters for web-ifc
 	add_executable(web-ifc ${web-ifc-source} ${web-ifc-wasm})
 	param_setter(web-ifc)
-	set_target_properties(web-ifc PROPERTIES LINK_FLAGS "${DEBUG_FLAG} --bind -flto --define-macro=REAL_T_IS_DOUBLE -s ALLOW_MEMORY_GROWTH=1 -s DYNAMIC_EXECUTION=0 -s MAXIMUM_MEMORY=4GB -sSTACK_SIZE=5MB -s EXPORT_NAME=WebIFCWasm -s MODULARIZE=1 -s ENVIRONMENT=web  -sASSERTIONS=1 -s EXPORTED_RUNTIME_METHODS=\"['HEAPU8','HEAPU32','HEAPF32']\"")
+	set_target_properties(web-ifc PROPERTIES LINK_FLAGS "${DEBUG_FLAG} --bind -msimd128 -flto --define-macro=REAL_T_IS_DOUBLE -s ALLOW_MEMORY_GROWTH=1 -s DYNAMIC_EXECUTION=0 -s MAXIMUM_MEMORY=4GB -sSTACK_SIZE=5MB -s EXPORT_NAME=WebIFCWasm -s MODULARIZE=1 -s ENVIRONMENT=web  -sASSERTIONS=1 -s EXPORTED_RUNTIME_METHODS=\"['HEAPU8','HEAPU32','HEAPF32']\"")
 
 	add_executable(web-ifc-node ${web-ifc-source} ${web-ifc-wasm})
 	param_setter(web-ifc-node)
-	set_target_properties(web-ifc-node PROPERTIES LINK_FLAGS "${DEBUG_FLAG} --bind -flto --define-macro=REAL_T_IS_DOUBLE -s ALLOW_MEMORY_GROWTH=1 -s DYNAMIC_EXECUTION=0 -s MAXIMUM_MEMORY=4GB -sSTACK_SIZE=5MB -s EXPORT_NAME=WebIFCWasm -s MODULARIZE=1 -s EXPORTED_RUNTIME_METHODS=\"['HEAPU8','HEAPU32','HEAPF32']\"")
+	set_target_properties(web-ifc-node PROPERTIES LINK_FLAGS "${DEBUG_FLAG} --bind -msimd128 -flto --define-macro=REAL_T_IS_DOUBLE -s ALLOW_MEMORY_GROWTH=1 -s DYNAMIC_EXECUTION=0 -s MAXIMUM_MEMORY=4GB -sSTACK_SIZE=5MB -s EXPORT_NAME=WebIFCWasm -s MODULARIZE=1 -s EXPORTED_RUNTIME_METHODS=\"['HEAPU8','HEAPU32','HEAPF32']\"")
 
 	# multi-treaded versions
 	add_executable(web-ifc-mt ${web-ifc-source} ${web-ifc-wasm})

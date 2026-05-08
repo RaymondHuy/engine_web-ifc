@@ -36,7 +36,7 @@ namespace webifc::parsing
       public:
         IfcTokenStream(const size_t chunkSize, const uint64_t maxChunks);
         ~IfcTokenStream();
-        void SetTokenSource(const std::function<uint32_t(char *, size_t, size_t)> &requestData);
+        void SetTokenSource(const std::function<uint32_t(char *, size_t, size_t)> &requestData, bool fromStream = false);
         void SetTokenSource(std::istream &requestData);
         template <typename T> T Read()
         {
@@ -53,15 +53,48 @@ namespace webifc::parsing
           Push(&input,sizeof(T));
         }
         void Push(void *v, const size_t size);
-        void Forward(const size_t size);
         std::string_view ReadString();
-        void Back();
-        bool IsAtEnd();
         void MoveTo(const size_t pos);
         size_t GetReadOffset();
         size_t GetTotalSize();
         IfcTokenStream * Clone();
         size_t GetNoLines();
+
+
+        inline void Forward(const size_t size)
+        {
+          _readPtr+=size;
+          while (_readPtr >= _cChunk->TokenSize()) 
+          {
+            if (_currentChunk == _chunks.size()-1)
+            {
+              _readPtr = _chunks.back().TokenSize();
+              return;
+            }
+            _readPtr -= _cChunk->TokenSize();
+            _currentChunk++;
+            _cChunk = &_chunks[_currentChunk];
+          }
+        }
+
+        inline void Back()
+        {
+          if (_readPtr == 0 ) 
+          {
+            if (_currentChunk > 0) 
+            {
+              _cChunk = &_chunks[--_currentChunk];
+              _readPtr=_cChunk->TokenSize()-1;
+              return;
+            }
+          }
+          _readPtr--;
+        }
+
+        inline bool IsAtEnd()
+        {
+          return _currentChunk >= _chunks.size()-1 && _readPtr >= _chunks.back().TokenSize();
+        }
 
       private:
         void checkMemory();
@@ -73,19 +106,30 @@ namespace webifc::parsing
         class IfcFileStream
         {
           public:
-            IfcFileStream(const std::function<uint32_t(char *, size_t, size_t)> &requestData, const uint32_t size);
+            IfcFileStream(const std::function<uint32_t(char *, size_t, size_t)> &requestData, const uint32_t size, bool fromStream);
             ~IfcFileStream();
             void Go(const uint32_t ref);
-            void Forward();
             void Back();
-            size_t GetRef();
             char Next();
-            char Prev();
-            bool IsAtEnd();
-            char Get();
             void Clear();
-            size_t GetNoLines();
             IfcFileStream * Clone();
+
+            inline void Forward() 
+            { 
+              _pointer++;
+              if (_pointer == _currentSize && _currentSize != 0)
+              {
+                _startRef += _currentSize;
+                load();
+              }
+            }
+
+            inline char Prev() { return _pointer == 0 ? prev : _buffer[_pointer-1]; }
+            inline bool IsAtEnd() { return _pointer == _currentSize && _currentSize == 0; }
+            inline size_t GetRef() { return _startRef + _pointer; }
+            inline char Get() { return _buffer[_pointer]; }
+            inline size_t GetNoLines() { return noLines; }
+
           private:
             void load();
             std::function<uint32_t(char *, size_t, size_t)> _dataSource;
@@ -96,6 +140,7 @@ namespace webifc::parsing
             size_t _startRef=0;
             char * _buffer;
             size_t noLines=0;
+            bool _fromStream;
         };
         class IfcTokenChunk
         {
@@ -103,12 +148,26 @@ namespace webifc::parsing
             	IfcTokenChunk(const size_t chunkSize, const size_t startRef, const size_t fileStartRef, IfcTokenStream::IfcFileStream *_fileStream);
               bool Clear(bool force);
               bool Clear();
-              bool IsLoaded();
-              size_t TokenSize();
-              size_t GetTokenRef();
-              void Push(void *v, const size_t size);
-              size_t GetMaxSize();
-              std::string_view ReadString(const size_t ptr,const size_t size); 
+              std::string_view ReadString(const size_t ptr,const size_t size);
+              inline bool IsLoaded() { return _loaded; }
+              inline size_t TokenSize() { return _currentSize; }
+              inline size_t GetTokenRef() { return _startRef; }
+              inline size_t GetMaxSize() { return _chunkSize; }
+              
+              inline void Push(void *v, const size_t size)
+              {
+                if (_chunkData == nullptr) _chunkData =  new uint8_t[_chunkSize];
+                _currentSize+=size;
+                if (_currentSize > _chunkSize) {
+                    uint8_t * tmp = _chunkData;
+                    _chunkData = new uint8_t[_currentSize];
+                    std::memcpy(_chunkData, tmp, _currentSize-size);
+                    _chunkSize = _currentSize;
+                    delete[] tmp;
+                }
+                std::memcpy(_chunkData + _currentSize - size, v, size);
+              }
+
               template <typename T> T Read(const size_t ptr)
               {
                 if (!_loaded) Load();
@@ -116,6 +175,7 @@ namespace webifc::parsing
                 std::memcpy(&v, _chunkData+ptr, sizeof(T));
                 return v;
               }
+
               template <typename T> void Push(T input)
               {
                 Push(&input,sizeof(T));
