@@ -108,6 +108,13 @@ The output of the build process consts of the following files:
 
 Although the primary focus of the library is to be used through WebAssembly in the browser/nodejs, the project can be used stand-alone as a c++ library or executable. See [here](https://github.com/ThatOpen/engine_web-ifc/blob/main/src/cpp/test/web-ifc-test.cpp) for a simple entry point to get started.
 
+## C++ API Server
+
+See [src/cpp/api/README.md](src/cpp/api/README.md) for build and run commands for the native Drogon C++ API server.
+
+The standalone browser frontend that uploads IFC files to the C++ API and renders
+server-generated geometry is in [examples/viewer-cpp-api](examples/viewer-cpp-api).
+
 [npm]: https://img.shields.io/npm/v/web-ifc
 [npm-url]: https://www.npmjs.com/package/web-ifc
 [npm-downloads]: https://img.shields.io/npm/dw/web-ifc

@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "../web-ifc/parsing/IfcLoader.h"
+#include "../web-ifc/modelmanager/ModelManager.h"
 #include "../web-ifc/schema/IfcSchemaManager.h"
 
 namespace
@@ -38,6 +39,8 @@ namespace
     constexpr uint32_t kDefaultLineWriterBuffer = 10'000U;
     constexpr uint32_t kDefaultTopTypes = 20U;
     constexpr uint16_t kDefaultPort = static_cast<uint16_t>(WEB_IFC_API_DEFAULT_PORT);
+    constexpr size_t kDefaultMaxRequestBodyBytes = 512ULL * 1024ULL * 1024ULL;
+    constexpr size_t kDefaultMaxMemoryBodyBytes = 2ULL * 1024ULL * 1024ULL;
     constexpr const char *kDefaultUploadDir = "/tmp/web-ifc-uploads";
 
     Json::Value BuildErrorPayload(const std::string &message)
@@ -46,6 +49,41 @@ namespace
         payload["ok"] = false;
         payload["error"] = message;
         return payload;
+    }
+
+    void AddCorsHeaders(const drogon::HttpRequestPtr &req, const drogon::HttpResponsePtr &resp)
+    {
+        const auto &origin = req->getHeader("Origin");
+        resp->addHeader("Access-Control-Allow-Origin", origin.empty() ? "*" : origin);
+        resp->addHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+
+        const auto &requestHeaders = req->getHeader("Access-Control-Request-Headers");
+        resp->addHeader(
+            "Access-Control-Allow-Headers",
+            requestHeaders.empty() ? "Content-Type, Accept" : requestHeaders);
+        resp->addHeader("Access-Control-Max-Age", "86400");
+        resp->addHeader("Vary", "Origin");
+    }
+
+    void SetupCors()
+    {
+        drogon::app().registerSyncAdvice([](const drogon::HttpRequestPtr &req) -> drogon::HttpResponsePtr
+                                          {
+            if (req->method() != drogon::HttpMethod::Options)
+            {
+                return {};
+            }
+
+            auto response = drogon::HttpResponse::newHttpResponse();
+            response->setStatusCode(drogon::k204NoContent);
+            AddCorsHeaders(req, response);
+            return response; });
+
+        drogon::app().registerPostHandlingAdvice(
+            [](const drogon::HttpRequestPtr &req, const drogon::HttpResponsePtr &resp)
+            {
+                AddCorsHeaders(req, resp);
+            });
     }
 
     std::string ToLowerAscii(std::string value)
@@ -483,6 +521,24 @@ namespace
         return kDefaultPort;
     }
 
+    size_t ResolveMaxRequestBodyBytes()
+    {
+        const char *envValue = std::getenv("WEB_IFC_API_MAX_BODY_BYTES");
+        if (envValue == nullptr || std::strlen(envValue) == 0)
+        {
+            return kDefaultMaxRequestBodyBytes;
+        }
+
+        try
+        {
+            return std::max<size_t>(std::stoull(envValue), 1024ULL * 1024ULL);
+        }
+        catch (...)
+        {
+            return kDefaultMaxRequestBodyBytes;
+        }
+    }
+
     Json::Value BuildIfcSummary(const std::string &filePath, uint32_t topN)
     {
         std::ifstream file(filePath, std::ios::binary);
@@ -553,11 +609,209 @@ namespace
 
         return response;
     }
+
+    std::vector<char> ReadFileBytes(const std::string &filePath)
+    {
+        std::ifstream file(filePath, std::ios::binary | std::ios::ate);
+        if (!file.is_open())
+        {
+            throw std::runtime_error("Could not open IFC file: " + filePath);
+        }
+
+        const auto fileSize = file.tellg();
+        if (fileSize < 0)
+        {
+            throw std::runtime_error("Could not read IFC file size: " + filePath);
+        }
+
+        std::vector<char> bytes(static_cast<size_t>(fileSize));
+        file.seekg(0, std::ios::beg);
+        if (!bytes.empty() && !file.read(bytes.data(), static_cast<std::streamsize>(bytes.size())))
+        {
+            throw std::runtime_error("Could not read IFC file: " + filePath);
+        }
+
+        return bytes;
+    }
+
+    webifc::manager::LoaderSettings BuildDefaultGeometrySettings()
+    {
+        webifc::manager::LoaderSettings settings;
+        settings.COORDINATE_TO_ORIGIN = true;
+        settings.CIRCLE_SEGMENTS = 6;
+        settings.TOLERANCE_PLANE_INTERSECTION = 1.0e-04;
+        settings.TOLERANCE_PLANE_DEVIATION = 1.0e-04;
+        settings.TOLERANCE_BACK_DEVIATION_DISTANCE = 1.0e-04;
+        settings.TOLERANCE_INSIDE_OUTSIDE_PERIMETER = 1.0e-10;
+        settings.TOLERANCE_SCALAR_EQUALITY = 1.0e-04;
+        settings.PLANE_REFIT_ITERATIONS = 10;
+        settings.BOOLEAN_UNION_THRESHOLD = 150;
+        return settings;
+    }
+
+    Json::Value BuildNumberArray(const std::array<double, 16> &values)
+    {
+        Json::Value array(Json::arrayValue);
+        for (const auto value : values)
+        {
+            array.append(value);
+        }
+        return array;
+    }
+
+    Json::Value BuildColorArray(const glm::dvec4 &color)
+    {
+        Json::Value array(Json::arrayValue);
+        array.append(color.x);
+        array.append(color.y);
+        array.append(color.z);
+        array.append(color.w);
+        return array;
+    }
+
+    Json::Value BuildVertexArray(webifc::geometry::IfcGeometry &geometry)
+    {
+        geometry.GetVertexData();
+
+        Json::Value array(Json::arrayValue);
+        for (const auto value : geometry.fvertexData)
+        {
+            array.append(value);
+        }
+        return array;
+    }
+
+    Json::Value BuildIndexArray(const webifc::geometry::IfcGeometry &geometry)
+    {
+        Json::Value array(Json::arrayValue);
+        for (const auto value : geometry.indexData)
+        {
+            array.append(Json::UInt(value));
+        }
+        return array;
+    }
+
+    Json::Value BuildIfcGeometry(const std::string &filePath)
+    {
+        auto bytes = ReadFileBytes(filePath);
+        if (bytes.empty())
+        {
+            throw std::runtime_error("IFC file is empty: " + filePath);
+        }
+
+        webifc::manager::ModelManager manager(false);
+        auto modelId = manager.CreateModel(BuildDefaultGeometrySettings());
+
+        const std::function<uint32_t(char *, size_t, size_t)> loaderFunc =
+            [&bytes](char *dest, size_t sourceOffset, size_t destSize) -> uint32_t
+        {
+            if (sourceOffset >= bytes.size())
+            {
+                return 0;
+            }
+
+            const auto remaining = bytes.size() - sourceOffset;
+            const auto readSize = std::min(remaining, destSize);
+            std::memcpy(dest, bytes.data() + sourceOffset, readSize);
+            return static_cast<uint32_t>(readSize);
+        };
+
+        auto *loader = manager.GetIfcLoader(modelId);
+        loader->LoadFile(loaderFunc);
+
+        auto *geometryProcessor = manager.GetGeometryProcessor(modelId);
+        const auto &schemaManager = manager.GetSchemaManager();
+
+        Json::Value geometries(Json::arrayValue);
+        Json::Value errors(Json::arrayValue);
+        uint64_t meshCount = 0;
+        uint64_t geometryCount = 0;
+        uint64_t vertexCount = 0;
+        uint64_t triangleCount = 0;
+
+        for (const auto type : schemaManager.GetIfcElementList())
+        {
+            if (type == webifc::schema::IFCOPENINGELEMENT ||
+                type == webifc::schema::IFCSPACE ||
+                type == webifc::schema::IFCOPENINGSTANDARDCASE)
+            {
+                continue;
+            }
+
+            const auto elements = loader->GetExpressIDsWithType(type);
+            const auto typeName = schemaManager.IfcTypeCodeToType(type);
+
+            for (const auto expressId : elements)
+            {
+                try
+                {
+                    auto flatMesh = geometryProcessor->GetFlatMesh(expressId);
+                    bool hasGeometry = false;
+
+                    for (const auto &placed : flatMesh.geometries)
+                    {
+                        auto &geometry = geometryProcessor->GetGeometry(placed.geometryExpressID);
+                        if (geometry.indexData.empty() || geometry.vertexData.empty())
+                        {
+                            continue;
+                        }
+
+                        Json::Value item;
+                        item["expressID"] = Json::UInt(expressId);
+                        item["type"] = typeName;
+                        item["geometryExpressID"] = Json::UInt(placed.geometryExpressID);
+                        item["color"] = BuildColorArray(placed.color);
+                        item["transform"] = BuildNumberArray(placed.flatTransformation);
+                        item["vertexData"] = BuildVertexArray(geometry);
+                        item["indexData"] = BuildIndexArray(geometry);
+
+                        vertexCount += geometry.fvertexData.size() / webifc::geometry::VERTEX_FORMAT_SIZE_FLOATS;
+                        triangleCount += geometry.indexData.size() / 3U;
+                        geometryCount++;
+                        hasGeometry = true;
+                        geometries.append(std::move(item));
+                    }
+
+                    if (hasGeometry)
+                    {
+                        meshCount++;
+                    }
+                    geometryProcessor->Clear();
+                }
+                catch (const std::exception &ex)
+                {
+                    if (errors.size() < 20)
+                    {
+                        Json::Value error;
+                        error["expressID"] = Json::UInt(expressId);
+                        error["type"] = typeName;
+                        error["message"] = ex.what();
+                        errors.append(std::move(error));
+                    }
+                    geometryProcessor->Clear();
+                }
+            }
+        }
+
+        Json::Value response;
+        response["ok"] = true;
+        response["filePath"] = filePath;
+        response["schema"] = std::string(schemaManager.GetSchemaName(loader->GetSchema()));
+        response["meshCount"] = Json::UInt64(meshCount);
+        response["geometryCount"] = Json::UInt64(geometryCount);
+        response["vertexCount"] = Json::UInt64(vertexCount);
+        response["triangleCount"] = Json::UInt64(triangleCount);
+        response["geometries"] = std::move(geometries);
+        response["errors"] = std::move(errors);
+        return response;
+    }
 } // namespace
 
 int main(int argc, char **argv)
 {
     using namespace drogon;
+
+    SetupCors();
 
     app().registerHandler(
         "/health",
@@ -674,12 +928,52 @@ int main(int argc, char **argv)
         },
         {Get, Post});
 
+    app().registerHandler(
+        "/api/ifc/geometry",
+        [](const HttpRequestPtr &req, std::function<void(const HttpResponsePtr &)> &&callback)
+        {
+            auto fail = [&](HttpStatusCode code, const std::string &message)
+            {
+                auto response = HttpResponse::newHttpJsonResponse(BuildErrorPayload(message));
+                response->setStatusCode(code);
+                callback(response);
+            };
+
+            auto filePath = ResolveFilePathFromRequest(req);
+            if (filePath.empty())
+            {
+                fail(k400BadRequest, "Missing filePath. Use query string (?filePath=...) or JSON body {\"filePath\":\"...\"}.");
+                return;
+            }
+
+            try
+            {
+                auto payload = BuildIfcGeometry(filePath);
+                auto response = HttpResponse::newHttpJsonResponse(payload);
+                response->setStatusCode(k200OK);
+                callback(response);
+            }
+            catch (const std::exception &ex)
+            {
+                fail(k500InternalServerError, ex.what());
+            }
+            catch (...)
+            {
+                fail(k500InternalServerError, "Unexpected server error while building IFC geometry.");
+            }
+        },
+        {Get, Post});
+
     auto port = ResolvePort(argc, argv);
+    auto maxRequestBodyBytes = ResolveMaxRequestBodyBytes();
     app().setLogLevel(trantor::Logger::kInfo);
+    app().setClientMaxBodySize(maxRequestBodyBytes);
+    app().setClientMaxMemoryBodySize(std::min(kDefaultMaxMemoryBodyBytes, maxRequestBodyBytes));
     app().addListener("0.0.0.0", port);
     app().setThreadNum(std::max(1U, std::thread::hardware_concurrency()));
 
-    LOG_INFO << "Starting web-ifc Drogon API on http://0.0.0.0:" << port;
+    LOG_INFO << "Starting web-ifc Drogon API on http://0.0.0.0:" << port
+             << " with max request body " << maxRequestBodyBytes << " bytes";
     app().run();
     return 0;
 }

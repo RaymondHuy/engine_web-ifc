@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>web-ifc C++ API Viewer</title>
+    <link rel="stylesheet" href="/examples/viewer-cpp-api/styles.css">
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "/node_modules/three/build/three.module.js",
+          "three/addons/": "/node_modules/three/examples/jsm/"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="workspace" aria-labelledby="page-title">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">web-ifc native API</p>
+            <h1 id="page-title">C++ IFC Upload Viewer</h1>
+          </div>
+          <div class="status-pill" id="connectionStatus" data-state="checking">
+            <span class="status-dot"></span>
+            <span id="connectionText">Checking API</span>
+          </div>
+        </header>
+
+        <section class="content-grid">
+          <section class="tool-panel" aria-labelledby="upload-title">
+            <div class="panel-head">
+              <h2 id="upload-title">Upload</h2>
+              <button class="icon-button" id="healthButton" type="button" aria-label="Check API">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M21 12a9 9 0 1 1-2.64-6.36"></path>
+                  <path d="M21 4v6h-6"></path>
+                </svg>
+              </button>
+            </div>
+
+            <label class="field-label" for="apiBase">API base URL</label>
+            <input id="apiBase" class="text-input" type="url" autocomplete="off" spellcheck="false">
+
+            <label class="dropzone" id="dropzone" for="fileInput">
+              <span class="drop-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <path d="M14 2v6h6"></path>
+                  <path d="M12 18v-6"></path>
+                  <path d="m9 15 3 3 3-3"></path>
+                </svg>
+              </span>
+              <span class="drop-title" id="dropTitle">Choose IFC file</span>
+              <span class="drop-meta" id="dropMeta">.ifc, .ifczip, .ifcxml</span>
+            </label>
+            <input id="fileInput" type="file" accept=".ifc,.ifczip,.ifcxml" hidden>
+
+            <div class="file-strip" id="fileStrip" hidden>
+              <div>
+                <span class="file-name" id="fileName"></span>
+                <span class="file-size" id="fileSize"></span>
+              </div>
+              <button class="icon-button" id="clearButton" type="button" aria-label="Clear file">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M18 6 6 18"></path>
+                  <path d="m6 6 12 12"></path>
+                </svg>
+              </button>
+            </div>
+
+            <div class="actions">
+              <div class="button-row">
+                <button class="primary-button" id="uploadButton" type="button" disabled>
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 3v12"></path>
+                    <path d="m7 8 5-5 5 5"></path>
+                    <path d="M5 21h14"></path>
+                  </svg>
+                  Upload to API
+                </button>
+                <button class="secondary-button" id="clearAllButton" type="button">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M18 6 6 18"></path>
+                    <path d="m6 6 12 12"></path>
+                  </svg>
+                  Clear
+                </button>
+              </div>
+              <div class="progress-wrap" id="progressWrap" hidden>
+                <progress id="uploadProgress" value="0" max="100"></progress>
+                <span id="progressText">0%</span>
+              </div>
+            </div>
+          </section>
+
+          <section class="result-panel" aria-labelledby="result-title">
+            <div class="panel-head">
+              <h2 id="result-title">3D View</h2>
+              <div class="panel-actions">
+                <button class="icon-button" id="resetViewButton" type="button" aria-label="Reset view">
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M21 12a9 9 0 1 1-2.64-6.36"></path>
+                    <path d="M21 4v6h-6"></path>
+                  </svg>
+                </button>
+                <span class="small-tag" id="requestState">Idle</span>
+              </div>
+            </div>
+
+            <div class="viewer3d" id="viewer3d">
+              <div class="viewer-empty" id="viewerEmpty">No model</div>
+            </div>
+
+            <dl class="result-summary">
+              <div>
+                <dt>Status</dt>
+                <dd id="summaryStatus">No request</dd>
+              </div>
+              <div>
+                <dt>Meshes</dt>
+                <dd id="summaryFile">-</dd>
+              </div>
+              <div>
+                <dt>Triangles</dt>
+                <dd id="summaryPath">-</dd>
+              </div>
+            </dl>
+
+            <pre class="response-box" id="responseOutput">{}</pre>
+          </section>
+        </section>
+      </section>
+    </main>
+
+    <script type="module" src="/examples/viewer-cpp-api/app.js"></script>
+  </body>
+</html>

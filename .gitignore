@@ -44,6 +44,7 @@ output
 debug_output
 .bin
 build
+uploads/
 build_wasm
 build_wasm_debug
 *.log
