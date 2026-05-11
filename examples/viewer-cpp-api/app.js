@@ -47,7 +47,8 @@ let scene3d;
 let camera;
 let renderer;
 let controls;
-let modelGroup = null;
+const modelGroups = [];
+const loadedModels = [];
 let lastCameraTarget = null;
 
 function normalizeBaseUrl(value) {
@@ -165,12 +166,35 @@ function clearAll() {
   removeFilePathFromUrl();
 }
 
+function prepareNextUpload() {
+  setSelectedFile(null);
+  els.progressWrap.hidden = true;
+  setProgress(0);
+  removeFilePathFromUrl();
+}
+
+function getLoadedTotals() {
+  return loadedModels.reduce(
+    (totals, model) => ({
+      modelCount: totals.modelCount + 1,
+      meshCount: totals.meshCount + (model.meshCount || 0),
+      triangleCount: totals.triangleCount + (model.triangleCount || 0),
+      vertexCount: totals.vertexCount + (model.vertexCount || 0),
+    }),
+    { modelCount: 0, meshCount: 0, triangleCount: 0, vertexCount: 0 },
+  );
+}
+
 function setResultFromGeometry(payload, uploadPayload) {
   els.requestState.textContent = payload && payload.ok ? "Rendered" : "Failed";
-  els.summaryStatus.textContent = payload && payload.ok ? `${payload.schema || "IFC"} OK` : "Error";
-  els.summaryFile.textContent = payload && payload.ok ? formatNumber(payload.meshCount) : "-";
-  els.summaryPath.textContent = payload && payload.ok ? formatNumber(payload.triangleCount) : "-";
+  const totals = getLoadedTotals();
+  const modelLabel = totals.modelCount === 1 ? "1 model" : `${totals.modelCount} models`;
+  els.summaryStatus.textContent = payload && payload.ok ? modelLabel : "Error";
+  els.summaryFile.textContent = payload && payload.ok ? formatNumber(totals.meshCount) : "-";
+  els.summaryPath.textContent = payload && payload.ok ? formatNumber(totals.triangleCount) : "-";
   showResponse({
+    loadedModels,
+    totals,
     upload: uploadPayload,
     geometry: compactPayload(payload),
   });
@@ -288,8 +312,9 @@ async function uploadSelectedFile() {
     }
 
     const geometryPayload = await fetchGeometry(firstFile.path);
-    renderGeometryPayload(geometryPayload);
+    renderGeometryPayload(geometryPayload, firstFile);
     setResultFromGeometry(geometryPayload, uploadPayload);
+    prepareNextUpload();
   } catch (error) {
     const payload = { ok: false, error: error.message };
     els.requestState.textContent = "Failed";
@@ -312,7 +337,7 @@ async function loadServerFile(filePath) {
   try {
     await checkHealth();
     const geometryPayload = await fetchGeometry(filePath);
-    renderGeometryPayload(geometryPayload);
+    renderGeometryPayload(geometryPayload, { filePath });
     setResultFromGeometry(geometryPayload, { filePath });
   } catch (error) {
     const payload = { ok: false, error: error.message };
@@ -379,46 +404,50 @@ function animate() {
 }
 
 function clearModel() {
-  if (!scene3d || !modelGroup) {
+  if (!scene3d || modelGroups.length === 0) {
     if (els.viewerEmpty) {
       els.viewerEmpty.hidden = false;
     }
     return;
   }
 
-  scene3d.remove(modelGroup);
-  modelGroup.traverse((child) => {
-    if (child.geometry) {
-      child.geometry.dispose();
-    }
-
-    if (child.material) {
-      if (Array.isArray(child.material)) {
-        child.material.forEach((material) => material.dispose());
-      } else {
-        child.material.dispose();
+  for (const group of modelGroups) {
+    scene3d.remove(group);
+    group.traverse((child) => {
+      if (child.geometry) {
+        child.geometry.dispose();
       }
-    }
-  });
 
-  modelGroup = null;
+      if (child.material) {
+        if (Array.isArray(child.material)) {
+          child.material.forEach((material) => material.dispose());
+        } else {
+          child.material.dispose();
+        }
+      }
+    });
+  }
+
+  modelGroups.length = 0;
+  loadedModels.length = 0;
   lastCameraTarget = null;
   els.viewerEmpty.hidden = false;
 }
 
-function renderGeometryPayload(payload) {
-  clearModel();
-
+function renderGeometryPayload(payload, source = {}) {
   const parts = Array.isArray(payload.geometries) ? payload.geometries : [];
   if (parts.length === 0) {
-    els.viewerEmpty.textContent = "No geometry";
-    els.viewerEmpty.hidden = false;
+    if (modelGroups.length === 0) {
+      els.viewerEmpty.textContent = "No geometry";
+      els.viewerEmpty.hidden = false;
+    }
     return;
   }
 
   els.viewerEmpty.hidden = true;
-  modelGroup = new THREE.Group();
-  modelGroup.name = "ifc-model";
+  const modelGroup = new THREE.Group();
+  const modelName = source.originalName || source.filePath || payload.filePath || `Model ${modelGroups.length + 1}`;
+  modelGroup.name = modelName;
 
   for (const part of parts) {
     const mesh = createMeshFromPart(part);
@@ -428,6 +457,16 @@ function renderGeometryPayload(payload) {
   }
 
   scene3d.add(modelGroup);
+  modelGroups.push(modelGroup);
+  loadedModels.push({
+    name: modelName,
+    filePath: payload.filePath,
+    schema: payload.schema,
+    meshCount: payload.meshCount || 0,
+    geometryCount: payload.geometryCount || 0,
+    vertexCount: payload.vertexCount || 0,
+    triangleCount: payload.triangleCount || 0,
+  });
   fitCameraToModel();
 }
 
@@ -480,12 +519,15 @@ function createMeshFromPart(part) {
 }
 
 function fitCameraToModel() {
-  if (!modelGroup || modelGroup.children.length === 0) {
+  if (modelGroups.length === 0) {
     return;
   }
 
-  modelGroup.updateMatrixWorld(true);
-  const box = new THREE.Box3().setFromObject(modelGroup);
+  const box = new THREE.Box3();
+  for (const group of modelGroups) {
+    group.updateMatrixWorld(true);
+    box.expandByObject(group);
+  }
   if (box.isEmpty()) {
     return;
   }
@@ -508,7 +550,7 @@ function fitCameraToModel() {
 }
 
 function resetView() {
-  if (lastCameraTarget) {
+  if (modelGroups.length > 0) {
     fitCameraToModel();
     return;
   }
