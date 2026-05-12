@@ -34,6 +34,27 @@ cmake --build build/web-ifc-drogon \
 
 On Linux, replace `$(sysctl -n hw.ncpu)` with `$(nproc)`.
 
+## CLion
+
+Open the repository root in CLion, not only the single `.cpp` file. CLion will
+detect the root `CMakeLists.txt` and the `cpp-api-debug` preset.
+
+If you already opened `src/cpp/api`, that works too. This folder has a small
+wrapper `CMakeLists.txt` that forwards CLion to the real C++ project.
+
+Use this run configuration:
+
+```text
+Target: web-ifc-drogon-api
+Executable: web-ifc-drogon-api
+Program arguments: 18080
+Working directory: repository root
+```
+
+If CLion still shows red include errors after opening the project, reload CMake
+from **Tools > CMake > Reload CMake Project** and wait for the first
+`FetchContent` download to finish.
+
 ## Run
 
 ```bash

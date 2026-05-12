@@ -1,7 +1,8 @@
+cmake_minimum_required(VERSION 3.18)
+
 # set up cmake to download the external projects
 include(FetchContent)
 cmake_policy(SET CMP0054 NEW)
-cmake_minimum_required(VERSION 3.18)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	message("Building In Debug Mode")
@@ -15,6 +16,7 @@ endif()
 project(web-ifc LANGUAGES CXX)
 enable_testing()
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -197,8 +199,14 @@ if(NOT EMSCRIPTEN)
 		endif()
 
 		add_executable(web-ifc-drogon-api "./api/web_ifc_drogon_main.cpp")
+		param_setter(web-ifc-drogon-api)
+		target_include_directories(web-ifc-drogon-api PRIVATE
+			${CMAKE_CURRENT_SOURCE_DIR}
+			${CMAKE_CURRENT_SOURCE_DIR}/web-ifc
+			${JSONCPP_INCLUDE_DIRS}
+		)
 		target_compile_definitions(web-ifc-drogon-api PRIVATE WEB_IFC_API_DEFAULT_PORT=${WEB_IFC_API_DEFAULT_PORT})
-		target_link_libraries(web-ifc-drogon-api PRIVATE web-ifc-library ${WEB_IFC_DROGON_TARGET})
+		target_link_libraries(web-ifc-drogon-api PRIVATE web-ifc-library ${WEB_IFC_DROGON_TARGET} ${JSONCPP_LIBRARIES})
 	endif()
 
 	# comment these to prevent debug files being generated

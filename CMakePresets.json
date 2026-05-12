@@ -1,0 +1,43 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "cpp-api-debug",
+      "displayName": "C++ API Debug",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build/clion-web-ifc-drogon",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "WEB_IFC_ENABLE_DROGON_API": "ON",
+        "WEB_IFC_API_DEFAULT_PORT": "18080"
+      }
+    },
+    {
+      "name": "cpp-api-release",
+      "displayName": "C++ API Release",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build/web-ifc-drogon",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "WEB_IFC_ENABLE_DROGON_API": "ON",
+        "WEB_IFC_API_DEFAULT_PORT": "18080"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "cpp-api-debug",
+      "configurePreset": "cpp-api-debug",
+      "targets": [
+        "web-ifc-drogon-api"
+      ]
+    },
+    {
+      "name": "cpp-api-release",
+      "configurePreset": "cpp-api-release",
+      "targets": [
+        "web-ifc-drogon-api"
+      ]
+    }
+  ]
+}

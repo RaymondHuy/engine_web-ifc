@@ -3,6 +3,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 #include <drogon/drogon.h>
+#include <json/json.h>
 
 #include <algorithm>
 #include <chrono>
@@ -22,9 +23,9 @@
 #include <utility>
 #include <vector>
 
-#include "../web-ifc/parsing/IfcLoader.h"
-#include "../web-ifc/modelmanager/ModelManager.h"
-#include "../web-ifc/schema/IfcSchemaManager.h"
+#include "web-ifc/parsing/IfcLoader.h"
+#include "web-ifc/modelmanager/ModelManager.h"
+#include "web-ifc/schema/IfcSchemaManager.h"
 
 namespace
 {
